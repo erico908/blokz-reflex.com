@@ -1,195 +1,232 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb'); /* style candy */
-      background-size: cover;
-      background-position: center;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    h1 {
-      text-align: center;
-      text-shadow: 2px 2px #000;
-      margin-top: 10px;
-    }
-
-    .button {
-      padding: 10px 20px;
-      margin: 8px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #menu, #gameOver, #info {
-      text-align: center;
-      background: rgba(0,0,0,0.4);
-      padding: 10px;
-      border-radius: 12px;
-      margin: 10px auto;
-      max-width: 300px;
-    }
-
-    .block {
-      width: 60px;
-      height: 60px;
-      background: #333;
-      border-radius: 10px;
-      position: absolute;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-
-    .explosive { background: #e03e3e; }
-    .frozen { background: #3ec9e0; }
-    .frozen::after {
-      content: "❄"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-    .bomb { background: #ffa500; }
-    .bomb::after {
-      content: "💣"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-
-    #gameOver { display: none; }
-
-    #message {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Blokz Reflex - Client avec difficultés</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+  #login, #lobby, #game { max-width: 400px; margin: auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 8px #ccc;}
+  #lobby, #game { display: none; }
+  #blocks { display: grid; grid-template-columns: repeat(4, 60px); grid-gap: 10px; margin-top: 20px; }
+  .block { width: 60px; height: 60px; background: #4caf50; cursor: pointer; border-radius: 6px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 24px; user-select: none; }
+  .block.hidden { background: #ddd; cursor: default; }
+  #onlineUsers { margin-top: 10px; }
+  button { margin-top: 10px; padding: 8px 12px; border: none; background: #2196f3; color: white; border-radius: 4px; cursor: pointer; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  #scoreboard { margin-top: 20px; }
+  #winner { font-size: 20px; font-weight: bold; margin-top: 20px; }
+  label { margin-right: 10px; }
+</style>
 </head>
 <body>
 
-<h1>🧱 Blokz Reflex</h1>
-
-<div id="menu">
-  <p>Choisis ton mode :</p>
-  <button class="button" onclick="startGame('facile')">Facile</button>
-  <button class="button" onclick="startGame('moyen')">Moyen</button>
-  <button class="button" onclick="startGame('impossible')">Impossible</button>
+<div id="login">
+  <h2>Connexion</h2>
+  <input id="pseudoInput" placeholder="Ton pseudo" autocomplete="off" /><br/>
+  <button id="btnLogin">Se connecter</button>
 </div>
 
-<div id="info" style="display:none;">
-  Score : <span id="score">0</span> | Vies : <span id="lives">2</span>
+<div id="lobby">
+  <h2>Bienvenue <span id="playerName"></span></h2>
+  <div>
+    <strong>Joueurs en ligne :</strong>
+    <ul id="onlineUsers"></ul>
+  </div>
+  <div>
+    <input id="opponentPseudo" placeholder="Pseudo adversaire" autocomplete="off" />
+  </div>
+  <div>
+    <label><input type="radio" name="difficulty" value="easy" checked /> Facile</label>
+    <label><input type="radio" name="difficulty" value="medium" /> Moyen</label>
+    <label><input type="radio" name="difficulty" value="hard" /> Impossible</label>
+  </div>
+  <button id="btnCreateGame">Créer partie</button>
 </div>
 
-<div id="message"></div>
-<div id="gameOver">
-  <h2>💀 Game Over</h2>
-  <p>Tu veux continuer ?</p>
-  <button class="button" onclick="watchAd()">📺 Regarder une pub</button>
-  <button class="button" onclick="restartGame()">🔁 Recommencer</button>
+<div id="game">
+  <h2>Jeu Blokz Reflex</h2>
+  <div id="scoreboard">Scores : <span id="scorePlayer"></span> vs <span id="scoreOpponent"></span></div>
+  <div>Vies restantes : <span id="livesDisplay"></span></div>
+  <div id="blocks"></div>
+  <button id="btnQuitGame">Quitter la partie</button>
+  <div id="winner"></div>
 </div>
 
-<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
-
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const scoreEl = document.getElementById('score');
-  const livesEl = document.getElementById('lives');
-  const infoEl = document.getElementById('info');
-  const menuEl = document.getElementById('menu');
-  const gameOverEl = document.getElementById('gameOver');
-  const messageEl = document.getElementById('message');
-  const popSound = document.getElementById('popSound');
+  // === CONFIG ===
+  const DIFFICULTY_SETTINGS = {
+    easy: { blockDuration: 5000, lives: 2 },
+    medium: { blockDuration: 3000, lives: 1 },
+    hard: { blockDuration: 1500, lives: 1 },
+  };
 
-  let score = 0, lives = 2, speed = 5000, spawnLoop, maxLives = 2;
-  const mechanics = ['explosive', 'frozen', 'bomb'];
+  // === VARIABLES ===
+  const socket = io('https://TON_SERVEUR_BACKEND_RAILWAY.railway.app'); // <-- remplace par ton URL Railway
+  let player = null;
+  let roomId = null;
+  let opponent = null;
+  let scores = {};
+  let difficulty = 'easy';
+  let lives = 2;
+  let blockTimers = [];
 
-  function startGame(mode) {
-    if (mode === "facile") { speed = 5000; maxLives = 2; }
-    else if (mode === "moyen") { speed = 3000; maxLives = 1; }
-    else if (mode === "impossible") { speed = 1500; maxLives = 1; }
+  // === DOM ===
+  const loginDiv = document.getElementById('login');
+  const lobbyDiv = document.getElementById('lobby');
+  const gameDiv = document.getElementById('game');
+  const pseudoInput = document.getElementById('pseudoInput');
+  const btnLogin = document.getElementById('btnLogin');
+  const playerNameSpan = document.getElementById('playerName');
+  const onlineUsersList = document.getElementById('onlineUsers');
+  const opponentPseudoInput = document.getElementById('opponentPseudo');
+  const btnCreateGame = document.getElementById('btnCreateGame');
+  const blocksDiv = document.getElementById('blocks');
+  const scorePlayerSpan = document.getElementById('scorePlayer');
+  const scoreOpponentSpan = document.getElementById('scoreOpponent');
+  const btnQuitGame = document.getElementById('btnQuitGame');
+  const winnerDiv = document.getElementById('winner');
+  const livesDisplay = document.getElementById('livesDisplay');
 
-    score = 0;
-    lives = maxLives;
-    scoreEl.textContent = score;
-    livesEl.textContent = lives;
-    infoEl.style.display = 'block';
-    menuEl.style.display = 'none';
-    gameOverEl.style.display = 'none';
-    spawnLoop = setInterval(spawnBlock, 900);
+  // === FONCTIONS ===
+  btnLogin.onclick = () => {
+    const pseudo = pseudoInput.value.trim();
+    if (!pseudo) return alert('Entre un pseudo');
+    player = { id: Date.now().toString(), pseudo };
+    socket.emit('login', player);
+    loginDiv.style.display = 'none';
+    lobbyDiv.style.display = 'block';
+    playerNameSpan.textContent = pseudo;
+  };
+
+  socket.on('onlineUsers', users => {
+    onlineUsersList.innerHTML = '';
+    users.forEach(p => {
+      if (p !== player.pseudo) {
+        const li = document.createElement('li');
+        li.textContent = p;
+        onlineUsersList.appendChild(li);
+      }
+    });
+  });
+
+  btnCreateGame.onclick = () => {
+    const opponentPseudo = opponentPseudoInput.value.trim();
+    if (!opponentPseudo) return alert('Entre le pseudo de l\'adversaire');
+    difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+    opponent = { id: opponentPseudo.split('').reduce((a,c)=>a+c.charCodeAt(0),''), pseudo: opponentPseudo };
+    roomId = `game_${player.id}_${opponent.id}`;
+    lives = DIFFICULTY_SETTINGS[difficulty].lives;
+    socket.emit('createGame', { hostId: player.id, guestId: opponent.id, difficulty });
+    lobbyDiv.style.display = 'none';
+    gameDiv.style.display = 'block';
+    winnerDiv.textContent = '';
+    initGame();
+  };
+
+  socket.on('gameCreated', ({ roomId: id }) => {
+    roomId = id;
+    socket.emit('joinGame', { roomId });
+  });
+
+  socket.on('gameStart', () => {
+    winnerDiv.textContent = '';
+    resetBlocks();
+  });
+
+  function initGame() {
+    blocksDiv.innerHTML = '';
+    scores[player.id] = 0;
+    scores[opponent.id] = 0;
+    updateScore();
+    updateLives();
+
+    const blockCount = 8;
+    for (let i = 0; i < blockCount; i++) {
+      const block = document.createElement('div');
+      block.className = 'block';
+      block.textContent = i + 1;
+      block.dataset.index = i;
+      block.onclick = () => onBlockClick(block);
+      blocksDiv.appendChild(block);
+      startBlockTimer(block);
+    }
   }
 
-  function spawnBlock() {
-    const block = document.createElement('div');
-    block.classList.add('block');
-    const isSpecial = Math.random() < 0.5;
+  function updateScore() {
+    scorePlayerSpan.textContent = scores[player.id] || 0;
+    scoreOpponentSpan.textContent = scores[opponent.id] || 0;
+  }
 
-    if (isSpecial) {
-      const type = mechanics[Math.floor(Math.random() * mechanics.length)];
-      block.classList.add(type);
-      block.dataset.type = type;
-    } else {
-      block.dataset.type = 'normal';
+  function updateLives() {
+    livesDisplay.textContent = lives;
+  }
+
+  // Lance le timer de disparition du bloc selon la difficulté
+  function startBlockTimer(block) {
+    const duration = DIFFICULTY_SETTINGS[difficulty].blockDuration;
+    const timer = setTimeout(() => {
+      if (!block.classList.contains('hidden')) {
+        // Le joueur n'a pas cliqué à temps, perd une vie
+        lives--;
+        updateLives();
+        block.classList.add('hidden');
+        block.style.pointerEvents = 'none';
+
+        if (lives <= 0) {
+          endGame(false);
+        }
+      }
+    }, duration);
+    blockTimers.push(timer);
+  }
+
+  function onBlockClick(block) {
+    if (block.classList.contains('hidden')) return;
+    block.classList.add('hidden');
+    block.style.pointerEvents = 'none';
+    clearTimersForBlock(block);
+
+    scores[player.id]++;
+    updateScore();
+    socket.emit('blockClicked', { roomId, playerId: player.id, score: scores[player.id] });
+
+    // Si tous les blocs sont cliqués, victoire
+    if ([...blocksDiv.children].every(b => b.classList.contains('hidden'))) {
+      endGame(true);
     }
+  }
 
-    const maxW = window.innerWidth - 70;
-    const maxH = window.innerHeight - 80;
-    block.style.left = Math.random() * maxW + "px";
-    block.style.top = Math.random() * maxH + "px";
+  function clearTimersForBlock(block) {
+    // Optionnel: ici on n'associe pas timer par bloc, on clear tout proprement
+    blockTimers.forEach(t => clearTimeout(t));
+    blockTimers = [];
 
-    document.body.appendChild(block);
-
-    const timeout = setTimeout(() => {
-      if (document.body.contains(block)) {
-        if (block.dataset.type !== 'normal') loseLife();
-        block.remove();
-      }
-    }, speed);
-
-    block.addEventListener('click', () => {
-      clearTimeout(timeout);
-      if (block.dataset.type !== 'normal') {
-        score++;
-        scoreEl.textContent = score;
-        popSound.currentTime = 0;
-        popSound.play();
-      } else {
-        loseLife();
-      }
-      block.remove();
+    // Redémarre timers sur blocs non cliqués
+    [...blocksDiv.children].forEach(b => {
+      if (!b.classList.contains('hidden')) startBlockTimer(b);
     });
   }
 
-  function loseLife() {
-    lives--;
-    livesEl.textContent = lives;
-    if (lives <= 0) endGame();
+  socket.on('updateScore', (updatedScores) => {
+    scores = updatedScores;
+    updateScore();
+  });
+
+  socket.on('gameEnded', ({ winnerId }) => {
+    endGame(winnerId === player.id);
+  });
+
+  function endGame(won) {
+    winnerDiv.textContent = won ? '🎉 Tu as gagné !' : '😞 Tu as perdu...';
+    lives = 0;
+    updateLives();
+    [...blocksDiv.children].forEach(b => b.style.pointerEvents = 'none');
+    // Envoie fin partie au serveur si tu as gagné
+    if (won) socket.emit('gameOver', { roomId, winnerId: player.id });
   }
 
-  function endGame() {
-    clearInterval(spawnLoop);
-    gameOverEl.style.display = 'block';
-    messageEl.textContent = '';
-  }
-
-  function watchAd() {
-    lives = 1;
-    livesEl.textContent = lives;
-    gameOverEl.style.display = 'none';
-    messageEl.textContent = "🎥 Tu as (imaginé) regardé une pub !";
-    spawnLoop = setInterval(spawnBlock, 900);
-  }
-
-  function restartGame() {
-    menuEl.style.display = 'block';
-    infoEl.style.display = 'none';
-    gameOverEl.style.display = 'none';
-    document.querySelectorAll('.block').forEach(b => b.remove());
-  }
-</script>
-</body>
-</html>
+  btnQuitGame.onclick = () => {
+    room
 
 
