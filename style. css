@@ -1,1 +1,46 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+  background: url('https://cdn.pixabay.com/photo/2020/03/11/12/28/game-background-4925021_1280.png') center/cover no-repeat;
+  color: white;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-top: 20px;
+}
+
+.game-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+.player {
+  background: rgba(0,0,0,0.5);
+  padding: 10px;
+  border-radius: 15px;
+}
+
+.grid {
+  width: 200px;
+  height: 200px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin: 10px auto;
+}
+
+.block {
+  width: 100%;
+  height: 50px;
+  background-color: red;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#timer {
+  font-size: 1.5rem;
+  margin: 10px 0;
+}
 
