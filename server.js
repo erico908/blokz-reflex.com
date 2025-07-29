@@ -1,46 +1,54 @@
-const express = require('express');
+const express = require("express");
+const fs = require("fs-extra");
+const path = require("path");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
-
-app.use(express.static('public'));
-
 const PORT = process.env.PORT || 3000;
 
-let players = {};
+const USERS_FILE = "./users.json";
 
-io.on('connection', (socket) => {
-  console.log('Un joueur connecté:', socket.id);
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public"))); // Pour le jeu
 
-  // Nouvel joueur
-  players[socket.id] = { score: 0, lives: 2 };
+// Initialiser fichier d'utilisateurs
+if (!fs.existsSync(USERS_FILE)) {
+  fs.writeJsonSync(USERS_FILE, []);
+}
 
-  // Envoie l’état actuel aux autres joueurs
-  io.emit('players-update', players);
+// Signup
+app.post("/api/signup", async (req, res) => {
+  const { username, password } = req.body;
+  const users = await fs.readJson(USERS_FILE);
 
-  // Réception mise à jour joueur (score, vie)
-  socket.on('update-state', data => {
-    if(players[socket.id]) {
-      players[socket.id].score = data.score;
-      players[socket.id].lives = data.lives;
-      io.emit('players-update', players);
-    }
-  });
+  if (users.find((u) => u.username === username)) {
+    return res.status(400).json({ message: "Pseudo déjà utilisé." });
+  }
 
-  // Chat
-  socket.on('chat-message', msg => {
-    io.emit('chat-message', {id: socket.id, message: msg});
-  });
-
-  // Joueur déconnecté
-  socket.on('disconnect', () => {
-    console.log('Joueur déconnecté:', socket.id);
-    delete players[socket.id];
-    io.emit('players-update', players);
-  });
+  users.push({ username, password });
+  await fs.writeJson(USERS_FILE, users);
+  res.json({ message: "Compte créé avec succès." });
 });
 
-http.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+// Login
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+  const users = await fs.readJson(USERS_FILE);
+
+  const user = users.find((u) => u.username === username && u.password === password);
+  if (!user) {
+    return res.status(401).json({ message: "Identifiants invalides." });
+  }
+
+  res.json({ message: "Connexion réussie." });
 });
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Serveur lancé sur http://localhost:${PORT}`);
+});
+
 
