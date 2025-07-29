@@ -227,6 +227,18 @@
   }
 
   btnQuitGame.onclick = () => {
-    room
+    roomId = null;
+    opponent = null;
+    scores = {};
+    difficulty = 'easy';
+    lives = 2;
+    blockTimers.forEach(t => clearTimeout(t));
+    blockTimers = [];
+    gameDiv.style.display = 'none';
+    lobbyDiv.style.display = 'block';
+  };
 
+</script>
 
+</body>
+</html>
