@@ -2,9 +2,9 @@
   "name": "blokz-refex",
   "version": "1.0.0",
   "description": "Jeu Blokz Refex avec multijoueur, backend Node.js",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "keywords": [
     "game",
@@ -22,3 +22,4 @@
     "sqlite3": "^5.1.2"
   }
 }
+
