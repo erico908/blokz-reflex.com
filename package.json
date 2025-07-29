@@ -1,1 +1,24 @@
-
+{
+  "name": "blokz-refex",
+  "version": "1.0.0",
+  "description": "Jeu Blokz Refex avec multijoueur, backend Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "game",
+    "socket.io",
+    "express",
+    "sqlite3",
+    "bcrypt"
+  ],
+  "author": "TonNom",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "express": "^4.18.2",
+    "socket.io": "^4.5.1",
+    "sqlite3": "^5.1.2"
+  }
+}
