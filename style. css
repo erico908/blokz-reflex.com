@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background-image: url("ton-image-candy.jpg");
+  background-size: cover;
+}
+
+#game-area {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.block {
+  width: 50px;
+  height: 50px;
+  background-color: #f00;
+  position: absolute;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 24px;
+  color: white;
+  font-weight: bold;
+}
