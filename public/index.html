@@ -1,24 +1,30 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>Blokz Reflex</title>
-  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 </head>
 <body>
-  <h1>Connexion au serveur...</h1>
-  <p id="status">En attente...</p>
+  <h1>Bienvenue sur Blokz Reflex</h1>
+  <select id="difficulty">
+    <option value="easy">Facile</option>
+    <option value="medium">Moyen</option>
+    <option value="hard">Impossible</option>
+  </select>
+  <button onclick="startGame()">Commencer</button>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
     socket.on("connect", () => {
-      document.getElementById("status").innerText = "✅ Connecté au serveur";
+      console.log("✅ Connecté au serveur !");
     });
 
-    socket.on("disconnect", () => {
-      document.getElementById("status").innerText = "❌ Déconnecté du serveur";
-    });
+    function startGame() {
+      const difficulty = document.getElementById("difficulty").value;
+      alert("Mode choisi : " + difficulty);
+      // ici tu pourras lancer la vraie logique du jeu
+    }
   </script>
 </body>
 </html>
