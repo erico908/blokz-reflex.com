@@ -3,39 +3,36 @@ const http = require("http");
 const { Server } = require("socket.io");
 const sqlite3 = require("sqlite3").verbose();
 const bcrypt = require("bcrypt");
-const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+
+// ⚙️ Config Socket.io avec CORS pour autoriser le client (localhost:8080)
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"]
+  }
+});
 
 app.use(express.json());
 app.use(express.static("public"));
 
-// Base de données persistante
-const db = new sqlite3.Database("./data.db");
+// 🗃️ Base de données en mémoire
+const db = new sqlite3.Database(":memory:");
 
 db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS users (
+  db.run(`CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pseudo TEXT UNIQUE,
     email TEXT UNIQUE,
     password TEXT
   )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS friends (
+  db.run(`CREATE TABLE friends (
     user_id INTEGER,
     friend_id INTEGER,
     status TEXT,
     PRIMARY KEY (user_id, friend_id)
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player1_id INTEGER,
-    player2_id INTEGER,
-    winner_id INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 });
 
@@ -48,12 +45,10 @@ app.post("/register", (req, res) => {
 
   bcrypt.hash(password, 10, (err, hash) => {
     if (err) return res.status(500).json({ error: "Erreur hash" });
-    db.run(`INSERT INTO users (pseudo, email, password) VALUES (?, ?, ?)`,
-      [pseudo, email, hash],
-      function (err) {
-        if (err) return res.status(400).json({ error: "Pseudo ou email déjà utilisé" });
-        res.json({ id: this.lastID, pseudo, email });
-      });
+    db.run(`INSERT INTO users (pseudo, email, password) VALUES (?, ?, ?)`, [pseudo, email, hash], function (err) {
+      if (err) return res.status(400).json({ error: "Pseudo ou email déjà utilisé" });
+      res.json({ id: this.lastID, pseudo, email });
+    });
   });
 });
 
@@ -72,7 +67,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// 🤝 Demande d’ami
+// 🤝 Envoyer une demande d’ami
 app.post("/friend-request", (req, res) => {
   const { userId, friendPseudo } = req.body;
   db.get(`SELECT id FROM users WHERE pseudo = ?`, [friendPseudo], (err, friend) => {
@@ -85,7 +80,7 @@ app.post("/friend-request", (req, res) => {
   });
 });
 
-// ✅ Accepter un ami
+// ✅ Accepter une demande d’ami
 app.post("/friend-accept", (req, res) => {
   const { userId, friendId } = req.body;
 
@@ -113,63 +108,17 @@ app.get("/friends/:userId", (req, res) => {
   });
 });
 
-// 🌐 WebSocket
+// 🌐 WebSocket (utilisateurs en ligne + chat)
 const onlineUsers = {};
-const gameRooms = {}; // roomId => { player1, player2, scores }
 
 io.on("connection", (socket) => {
-  console.log("Nouvelle connexion :", socket.id);
+  console.log("🔌 Connexion WebSocket :", socket.id);
 
-  // 🔓 Login WebSocket
   socket.on("login", (user) => {
     onlineUsers[user.id] = { socketId: socket.id, pseudo: user.pseudo };
     io.emit("onlineUsers", Object.values(onlineUsers).map(u => u.pseudo));
   });
 
-  // 💬 Chat
-  socket.on("chatMessage", (msg) => {
-    io.emit("chatMessage", msg);
-  });
-
-  // 🎮 Création de partie
-  socket.on("createGame", ({ hostId, guestId }) => {
-    const roomId = `game_${hostId}_${guestId}`;
-    socket.join(roomId);
-    gameRooms[roomId] = {
-      player1: hostId,
-      player2: guestId,
-      scores: { [hostId]: 0, [guestId]: 0 }
-    };
-    io.to(roomId).emit("gameCreated", { roomId });
-  });
-
-  // 🧩 Rejoindre une partie
-  socket.on("joinGame", ({ roomId }) => {
-    socket.join(roomId);
-    io.to(roomId).emit("gameStart");
-  });
-
-  // 🖱️ Clic sur un bloc
-  socket.on("blockClicked", ({ roomId, playerId, score }) => {
-    if (gameRooms[roomId]) {
-      gameRooms[roomId].scores[playerId] = score;
-      io.to(roomId).emit("updateScore", gameRooms[roomId].scores);
-    }
-  });
-
-  // 🏁 Fin de partie
-  socket.on("gameOver", ({ roomId, winnerId }) => {
-    const room = gameRooms[roomId];
-    if (room) {
-      const { player1, player2 } = room;
-      db.run(`INSERT INTO matches (player1_id, player2_id, winner_id) VALUES (?, ?, ?)`,
-        [player1, player2, winnerId]);
-      io.to(roomId).emit("gameEnded", { winnerId });
-      delete gameRooms[roomId];
-    }
-  });
-
-  // ❌ Déconnexion
   socket.on("disconnect", () => {
     for (const id in onlineUsers) {
       if (onlineUsers[id].socketId === socket.id) {
@@ -179,12 +128,17 @@ io.on("connection", (socket) => {
     }
     io.emit("onlineUsers", Object.values(onlineUsers).map(u => u.pseudo));
   });
+
+  socket.on("chatMessage", (msg) => {
+    io.emit("chatMessage", msg);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });
+
 
 
 
