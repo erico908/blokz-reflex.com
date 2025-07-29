@@ -1,42 +1,92 @@
 const socket = io();
-let score1 = 0;
-let score2 = 0;
-let timeLeft = 30;
 
-function createBlock(playerId, gridId, scoreId) {
-  const grid = document.getElementById(gridId);
-  grid.innerHTML = "";
-  const block = document.createElement("div");
-  block.classList.add("block");
-  const position = Math.floor(Math.random() * 16);
-  block.style.gridColumnStart = (position % 4) + 1;
-  block.style.gridRowStart = Math.floor(position / 4) + 1;
-  block.addEventListener("click", () => {
-    if (playerId === 1) score1++;
-    else score2++;
-    document.getElementById(scoreId).innerText = `Score : ${playerId === 1 ? score1 : score2}`;
-    socket.emit("scoreUpdate", { playerId, score: playerId === 1 ? score1 : score2 });
-    createBlock(playerId, gridId, scoreId);
-  });
-  grid.appendChild(block);
-}
+const playersStatus = document.getElementById('playersStatus');
 
-createBlock(1, "grid1", "score1");
-createBlock(2, "grid2", "score2");
+const playerAreas = {
+  [null]: null, // pour stocker le joueur local (sera défini après auth)
+};
 
-const timerInterval = setInterval(() => {
-  timeLeft--;
-  document.getElementById("timer").innerText = `Temps : ${timeLeft}s`;
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval);
-    alert(`Fin du jeu ! Joueur 1: ${score1} pts, Joueur 2: ${score2} pts`);
-  }
-}, 1000);
+let localPlayerId = null;
+let localPlayerArea = null;
 
-socket.on("scoreUpdate", ({ playerId, score }) => {
-  if (playerId === 1) {
-    document.getElementById("score1").innerText = `Score : ${score}`;
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Connecté
+    localPlayerId = null; // on va chercher son socket id plus tard
   } else {
-    document.getElementById("score2").innerText = `Score : ${score}`;
+    localPlayerId = null;
   }
 });
+
+// Dès que le serveur envoie l’état joueurs
+socket.on('players-update', players => {
+  if(!localPlayerId) {
+    // On cherche l'id socket correspondant à notre session
+    localPlayerId = socket.id;
+  }
+
+  // Affiche le nombre de joueurs
+  playersStatus.innerHTML = `Joueurs connectés: ${Object.keys(players).length}`;
+
+  // Met à jour les zones des joueurs
+  const ids = Object.keys(players);
+  const areas = ['player1', 'player2'];
+
+  for(let i=0; i<areas.length; i++) {
+    const area = document.getElementById(areas[i]);
+    if(ids[i]) {
+      const p = players[ids[i]];
+      area.querySelector('.score').textContent = p.score;
+      area.querySelector('.lives').textContent = p.lives;
+    } else {
+      area.querySelector('.score').textContent = '-';
+      area.querySelector('.lives').textContent = '-';
+    }
+  }
+});
+
+// Gestion du jeu (exemple simplifié)
+
+function createBlock(areaEl) {
+  const block = document.createElement('div');
+  block.classList.add('block');
+
+  const maxX = areaEl.clientWidth - 50;
+  const maxY = areaEl.clientHeight - 50;
+
+  block.style.left = Math.random() * maxX + 'px';
+  block.style.top = Math.random() * maxY + 'px';
+
+  areaEl.appendChild(block);
+
+  const timeout = setTimeout(() => {
+    if (block.parentNode) {
+      block.parentNode.removeChild(block);
+      loseLife();
+    }
+  }, 3000);
+
+  block.onclick = () => {
+    clearTimeout(timeout);
+    block.parentNode.removeChild(block);
+    addScore();
+  };
+}
+
+function addScore() {
+  // À compléter: envoyer score au serveur
+}
+
+function loseLife() {
+  // À compléter: envoyer vies au serveur
+}
+
+// Exemple simple: spawn un bloc toutes les 1.5s dans chaque zone
+setInterval(() => {
+  const p1Zone = document.querySelector('#player1 .gameZone');
+  const p2Zone = document.querySelector('#player2 .gameZone');
+
+  createBlock(p1Zone);
+  createBlock(p2Zone);
+}, 1500);
+;
