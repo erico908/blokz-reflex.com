@@ -1,96 +1,183 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(145deg, #330066, #6600cc);
-      background-size: cover;
-      color: #fff;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🧱 Blokz Reflex - Challenge</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #eee;
+    margin: 0; padding: 0;
+    overflow: hidden;
+    user-select: none;
+  }
+  h1 {
+    text-align: center;
+    margin-top: 15px;
+    text-shadow: 0 0 10px #1f8aff;
+  }
+  #menu, #game, #gameOver, #trophies {
+    max-width: 360px;
+    margin: 15px auto;
+    background: rgba(0,0,0,0.4);
+    padding: 15px;
+    border-radius: 10px;
+  }
+  #menu img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  .button {
+    background: #1f8aff;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    margin: 6px 4px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .button:hover {
+    background: #1066d0;
+  }
+  #instructions {
+    background: #0d1e38;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.3em;
+  }
+  #instructions img {
+    width: 100%;
+    max-width: 320px;
+    margin: 10px 0;
+    border-radius: 8px;
+  }
+  #info {
+    text-align: center;
+    font-size: 18px;
+    margin: 10px auto;
+    max-width: 360px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px;
+    border-radius: 8px;
+  }
+  #game {
+    position: relative;
+    height: 400px;
+    margin-top: 20px;
+    border-radius: 12px;
+    background: linear-gradient(45deg, #243b55, #141e30);
+    overflow: hidden;
+  }
+  .block {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+  }
+  .normal {
+    background: #666;
+  }
+  .explosive {
+    background: #e03e3e;
+  }
+  .frozen {
+    background: #3ec9e0;
+  }
+  .bomb {
+    background: #ffa500;
+  }
+  .block::after {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .frozen::after {
+    content: "❄";
+    color: #cff;
+  }
+  .bomb::after {
+    content: "💣";
+  }
 
-    h1 {
-      margin-top: 20px;
-      text-shadow: 2px 2px #000;
-    }
-
-    #menu, #game, #gameOver, #trophies {
-      margin-top: 20px;
-    }
-
-    .button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #ff66cc;
-      color: white;
-    }
-
-    #game {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin: 20px;
-    }
-
-    .block {
-      width: 20vw;
-      max-width: 60px;
-      aspect-ratio: 1/1;
-      background: #333;
-      border-radius: 8px;
-      cursor: pointer;
-      position: absolute;
-      transition: transform 0.1s;
-    }
-
-    .explosive { background: #e03e3e; }
-    .frozen { background: #3ec9e0; }
-    .frozen::after {
-      content: "❄"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-    .bomb { background: #ffa500; }
-    .bomb::after {
-      content: "💣"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-
-    #info {
-      margin-top: 10px;
-      font-size: 18px;
-      display: inline-block;
-      padding: 8px 16px;
-    }
-
-    #gameOver, #trophies {
-      display: none;
-    }
-
-    #message {
-      margin-top: 10px;
-      height: 20px;
-    }
-  </style>
+  #message {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 12px;
+    height: 20px;
+    color: #ffcc00;
+  }
+  #gameOver {
+    display: none;
+    text-align: center;
+  }
+  #gameOver h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff4444;
+    text-shadow: 0 0 10px #ff4444;
+  }
+  #gameOver p {
+    margin-bottom: 20px;
+  }
+  #trophies {
+    max-width: 360px;
+    margin: 20px auto 10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 10px 15px;
+    font-size: 14px;
+    line-height: 1.4em;
+  }
+  #trophies h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #ffd700;
+    text-shadow: 0 0 5px #ffd700;
+  }
+  #trophies ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #trophies li {
+    margin-bottom: 6px;
+    padding-left: 15px;
+    position: relative;
+  }
+  #trophies li::before {
+    content: "🏆";
+    position: absolute;
+    left: 0;
+  }
+</style>
 </head>
 <body>
 
 <h1>🧱 Blokz Reflex</h1>
 
 <div id="menu">
-  <p>Choisis ton mode :</p>
+  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Fond Candy Motivant" />
+  <p>Choisis ton mode et tente de dépasser les 30 points pour gagner le challenge !</p>
   <button class="button" onclick="startGame('facile')">Facile</button>
   <button class="button" onclick="startGame('moyen')">Moyen</button>
   <button class="button" onclick="startGame('impossible')">Impossible</button>
+  
+  <div id="instructions">
+    <h3>Comment jouer ?</h3>
+    <p>Clique sur les blocs colorés <strong>avant qu'ils disparaissent</strong>. Attention, certains blocs te feront perdre une vie si tu te trompes.</p>
+    <img src="https://i.imgur.com/cwQ2h9M.png" alt="Exemple blocs" />
+    <p><strong>Objectif :</strong> Atteindre 30 points pour gagner le challenge et débloquer des trophées !</p>
+  </div>
 </div>
 
 <div id="info" style="display:none;">
@@ -101,114 +188,61 @@
 
 <div id="message"></div>
 
+<div id="gameOver">
+  <h2>💀 Game Over</h2>
+  <p id="finalScore"></p>
+  <button class="button" onclick="restartGame()">🔁 Recommencer</button>
+  <button class="button" onclick="quitToMenu()">🏠 Quitter</button>
+</div>
+
+<div id="trophies" style="display:none;">
+  <h3>Trophées débloqués</h3>
+  <ul id="trophiesList"></ul>
+</div>
+
 <audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
 
 <script>
+(() => {
   const scoreEl = document.getElementById('score');
   const livesEl = document.getElementById('lives');
   const infoEl = document.getElementById('info');
   const menuEl = document.getElementById('menu');
   const gameEl = document.getElementById('game');
   const messageEl = document.getElementById('message');
+  const gameOverEl = document.getElementById('gameOver');
+  const finalScoreEl = document.getElementById('finalScore');
+  const trophiesEl = document.getElementById('trophies');
+  const trophiesListEl = document.getElementById('trophiesList');
   const popSound = document.getElementById('popSound');
 
   let score = 0;
   let lives = 2;
-  let speed = 700; // temps de disparition des blocs
-  let spawnRate = 1000; // temps entre chaque bloc
-  let spawnLoop;
-  let mode = "";
-  let mechanics = ['explosive', 'frozen', 'bomb'];
+  let maxLives = 2;
+  let spawnInterval = 1000;
+  let blockDuration = 700;
+  let spawnTimer = null;
+  let difficultyStep = 0;
+  let currentMode = null;
+  const blocksTypes = ['normal', 'explosive', 'frozen', 'bomb'];
+  let trophies = JSON.parse(localStorage.getItem('blokzTrophies')) || [];
 
-  function startGame(selectedMode) {
-    mode = selectedMode;
-    score = 0;
-    scoreEl.textContent = score;
-
-    if (mode === 'facile') {
-      speed = 5000;
-      spawnRate = 1000;
-      lives = 2;
-    } else if (mode === 'moyen') {
-      speed = 3000;
-      spawnRate = 1000;
-      lives = 1;
-    } else if (mode === 'impossible') {
-      speed = 700; // départ plus simple
-      spawnRate = 1000;
-      lives = 1;
-    }
-
-    livesEl.textContent = lives;
-    infoEl.style.display = 'block';
-    menuEl.style.display = 'none';
-    clearInterval(spawnLoop);
-    spawnLoop = setInterval(spawnBlock, spawnRate);
-  }
-
-  function spawnBlock() {
-    const block = document.createElement('div');
-    block.classList.add('block');
-
-    const isSpecial = Math.random() < 0.5;
-    if (isSpecial) {
-      const type = mechanics[Math.floor(Math.random() * mechanics.length)];
-      block.classList.add(type);
-      block.dataset.type = type;
+  function updateTrophiesDisplay() {
+    trophiesListEl.innerHTML = '';
+    if(trophies.length === 0){
+      trophiesListEl.innerHTML = '<li>Aucun trophée débloqué</li>';
     } else {
-      block.dataset.type = 'normal';
-    }
-
-    const maxW = window.innerWidth - 70;
-    const maxH = window.innerHeight - 70;
-    block.style.left = Math.random() * maxW + "px";
-    block.style.top = Math.random() * maxH + "px";
-
-    document.body.appendChild(block);
-
-    const timeout = setTimeout(() => {
-      if (document.body.contains(block)) {
-        if (block.dataset.type !== 'normal') loseLife();
-        block.remove();
-      }
-    }, speed);
-
-    block.addEventListener('click', () => {
-      clearTimeout(timeout);
-      if (block.dataset.type !== 'normal') {
-        score++;
-        scoreEl.textContent = score;
-        popSound.currentTime = 0;
-        popSound.play();
-        // augmente la difficulté si mode impossible
-        if (mode === 'impossible') adjustDifficulty();
-      } else {
-        loseLife();
-      }
-      block.remove();
-    });
-  }
-
-  function adjustDifficulty() {
-    // Chaque 10 points, diminue la durée de vie des blocs de 50ms
-    if (score % 10 === 0 && speed > 200) {
-      speed -= 50;
+      trophies.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        trophiesListEl.appendChild(li);
+      });
     }
   }
+  
+  function saveTrophies() {
+   
 
-  function loseLife() {
-    lives--;
-    livesEl.textContent = lives;
-    if (lives <= 0) endGame();
-  }
-
-  function endGame() {
-    clearInterval(spawnLoop);
-    messageEl.textContent = "💀 Game Over";
-  }
-</script>
-</body>
-</html>
 
 
 
