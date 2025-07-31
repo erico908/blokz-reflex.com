@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blokz Reflex - Menu</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #121212, #1e1e1e);
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .menu {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #000;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    input, select, button {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    .instructions {
+      text-align: left;
+      font-size: 0.9rem;
+      margin-top: 20px;
+      background: #1c1c1c;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu">
+    <h2>🎮 Blokz Reflex</h2>
+    
+    <input type="text" id="username" placeholder="Entre ton pseudo" />
+    <select id="difficulty">
+      <option value="">Choisis une difficulté</option>
+      <option value="easy">Facile</option>
+      <option value="medium">Moyen</option>
+      <option value="hard">Impossible</option>
+    </select>
+    <button onclick="startGame()">Prêt</button>
+
+    <div class="instructions">
+      <strong>Instructions :</strong><br/>
+      - Clique sur les blocs colorés avant qu'ils disparaissent<br/>
+      - Ne clique jamais sur les blocs gris ❌<br/>
+      - Si tu rates un bloc coloré → tu perds une vie ❤️<br/>
+      - Clique sur "Prêt" pour accéder à la boutique avant de jouer<br/>
+    </div>
+  </div>
+
+  <script>
+    async function startGame() {
+      const username = document.getElementById("username").value.trim();
+      const difficulty = document.getElementById("difficulty").value;
+
+      if (!username || !difficulty) {
+        alert("Remplis ton pseudo et la difficulté !");
+        return;
+      }
+
+      // Login ou création
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+
+      // Redirection avec paramètres GET
+      window.location.href = `/game.html?username=${encodeURIComponent(username)}&difficulty=${difficulty}`;
+    }
+  </script>
+</body>
+</html>
