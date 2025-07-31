@@ -1,13 +1,16 @@
 {
-  "name": "blokz-server",
+  "name": "blokz-reflex-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Serveur pour Blokz Reflex",
+  "main": "serveur.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node serveur.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "fs": "^0.0.1-security"
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16"
   }
 }
+
