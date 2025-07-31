@@ -7,19 +7,19 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #000;
+      background-size: cover;
+      background-position: center;
       color: #fff;
       text-align: center;
       margin: 0;
       padding: 0;
-      overflow-x: hidden;
     }
 
     h1 {
       margin-top: 20px;
     }
 
-    #menu, #game, #gameOver, #trophies {
+    #menu, #game, #gameOver, #trophies, #shop {
       margin-top: 20px;
     }
 
@@ -33,11 +33,13 @@
     }
 
     #game {
-      display: flex;
+      display: none;
       flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
       margin: 20px;
+      position: relative;
+      height: 60vh;
     }
 
     .block {
@@ -50,46 +52,38 @@
       position: absolute;
     }
 
-    .explosive { background: #e03e3e; }
-    .frozen { background: #3ec9e0; }
-    .frozen::after {
-      content: "❄"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-    .bomb { background: #ffa500; }
-    .bomb::after {
-      content: "💣"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
+    .special1 { background: #e03e3e; }
+    .special2 { background: #3ec9e0; }
+    .special3 { background: #ffa500; }
 
     #info {
       margin-top: 10px;
       font-size: 18px;
-      display: inline-block;
+      display: none;
       padding: 8px 16px;
     }
 
-    #gameOver, #trophies {
+    #gameOver, #trophies, #shop {
       display: none;
     }
 
-    #message {
-      margin-top: 10px;
-      height: 20px;
-    }
-
     #instructions {
-      padding: 20px;
       max-width: 600px;
       margin: auto;
-      text-align: left;
+      padding: 20px;
     }
 
-    #instructions ul {
-      text-align: left;
+    #image-demo {
+      width: 90%;
+      max-width: 300px;
+      margin: 10px auto;
     }
 
-    img {
-      max-width: 100%;
-      border-radius: 10px;
+    #bgPicker {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
     }
   </style>
 </head>
@@ -97,42 +91,161 @@
 
 <h1>🧱 Blokz Reflex</h1>
 
+<input type="file" id="bgPicker" accept="image/*" onchange="changeBackground(event)" title="Choisir un fond personnalisé">
+
 <div id="menu">
+  <div id="instructions">
+    <p>📋 Clique sur les blocs spéciaux avant qu’ils disparaissent pour gagner des trophées 🏆.</p>
+    <p>💥 Clique sur un mauvais bloc = rien ! Ignore un bon bloc = perte de vie !</p>
+    <p>🛍️ Utilise tes trophées dans la boutique pour acheter des vies et des bonus.</p>
+    <img id="image-demo" src="https://upload.wikimedia.org/wikipedia/en/6/6f/Candy_Crush_icon.png" alt="Démo">
+  </div>
   <p>Choisis ton mode :</p>
   <button class="button" onclick="startGame('facile')">Facile</button>
   <button class="button" onclick="startGame('moyen')">Moyen</button>
   <button class="button" onclick="startGame('impossible')">Impossible</button>
 </div>
 
-<div id="instructions">
-  <h2>📖 Instructions</h2>
-  <p>Bienvenue sur <strong>Blokz Reflex</strong> ! Le but est simple :</p>
-  <ul>
-    <li>🟦 Clique sur les blocs avant qu’ils ne disparaissent.</li>
-    <li>💣 Attention à ne pas cliquer sur les mauvais blocs !</li>
-    <li>❤️ Tu as un nombre limité de vies selon la difficulté.</li>
-    <li>🏆 Chaque clic réussi te donne 1 trophée.</li>
-    <li>🛒 Utilise tes trophées dans la boutique pour acheter des vies ou des blocs spéciaux.</li>
-  </ul>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Candy_Crush_Saga_Logo.svg/320px-Candy_Crush_Saga_Logo.svg.png" alt="Exemple">
-</div>
-
-<div id="info" style="display:none;">
-  Score : <span id="score">0</span> | Vies : <span id="lives">2</span>
+<div id="info">
+  Score : <span id="score">0</span> | Vies : <span id="lives">2</span> | 🏆 : <span id="trophies">0</span>
 </div>
 
 <div id="game"></div>
 
-<div id="message"></div>
+<div id="gameOver">
+  <p id="finalScore"></p>
+  <button class="button" onclick="retry()">Recommencer</button>
+  <button class="button" onclick="goToMenu()">Retour au menu</button>
+</div>
+
+<div id="shop">
+  <h2>🛍️ Boutique</h2>
+  <p>Achetez des bonus avec vos trophées</p>
+  <button class="button" onclick="buyLife()">+1 vie (100 🏆)</button>
+  <button class="button" onclick="buyBlock('special1', 200)">Bloc rouge (200 🏆)</button>
+  <button class="button" onclick="buyBlock('special2', 500)">Bloc bleu ❄ (500 🏆)</button>
+  <button class="button" onclick="buyBlock('special3', 1000)">Bloc orange 💣 (1000 🏆)</button>
+</div>
 
 <audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
 
 <script>
-  // Script JS ici (inchangé)
+let score = 0;
+let lives = 2;
+let trophies = localStorage.getItem("trophies") ? parseInt(localStorage.getItem("trophies")) : 0;
+let currentMode = "";
+let blockDuration = 2000;
+let spawnRate = 1500;
+let gameInterval;
+
+function changeBackground(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => document.body.style.backgroundImage = `url('${reader.result}')`;
+  reader.readAsDataURL(file);
+}
+
+function startGame(mode) {
+  currentMode = mode;
+  score = 0;
+  lives = mode === "facile" ? 2 : 1;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("instructions").style.display = "none";
+  document.getElementById("info").style.display = "inline-block";
+  document.getElementById("game").style.display = "flex";
+  document.getElementById("score").textContent = score;
+  document.getElementById("lives").textContent = lives;
+  document.getElementById("trophies").textContent = trophies;
+
+  if (mode === "facile") {
+    blockDuration = 5000;
+    spawnRate = 2000;
+  } else if (mode === "moyen") {
+    blockDuration = 3000;
+    spawnRate = 1000;
+  } else {
+    blockDuration = 700;
+    spawnRate = 1000;
+  }
+  gameInterval = setInterval(spawnBlock, spawnRate);
+}
+
+function spawnBlock() {
+  const game = document.getElementById("game");
+  const block = document.createElement("div");
+  block.className = "block";
+  block.style.left = `${Math.random() * 80}vw`;
+  block.style.top = `${Math.random() * 50}vh`;
+  const special = Math.random();
+  if (special < 0.5) block.classList.add("special1");
+
+  let clicked = false;
+  block.onclick = () => {
+    if (!clicked) {
+      clicked = true;
+      if (block.classList.contains("special1")) {
+        score++;
+        trophies++;
+        localStorage.setItem("trophies", trophies);
+        document.getElementById("score").textContent = score;
+        document.getElementById("trophies").textContent = trophies;
+        document.getElementById("popSound").play();
+      }
+      block.remove();
+    }
+  };
+  game.appendChild(block);
+
+  setTimeout(() => {
+    if (!clicked && block.classList.contains("special1")) {
+      lives--;
+      document.getElementById("lives").textContent = lives;
+      if (lives <= 0) endGame();
+    }
+    block.remove();
+  }, blockDuration);
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  document.getElementById("game").style.display = "none";
+  document.getElementById("info").style.display = "none";
+  document.getElementById("gameOver").style.display = "block";
+  document.getElementById("finalScore").textContent = `Partie terminée ! Score : ${score}`;
+}
+
+function retry() {
+  document.getElementById("gameOver").style.display = "none";
+  startGame(currentMode);
+}
+
+function goToMenu() {
+  document.getElementById("gameOver").style.display = "none";
+  document.getElementById("menu").style.display = "block";
+}
+
+function buyLife() {
+  if (trophies >= 100) {
+    trophies -= 100;
+    lives++;
+    localStorage.setItem("trophies", trophies);
+    document.getElementById("trophies").textContent = trophies;
+    document.getElementById("lives").textContent = lives;
+  }
+}
+
+function buyBlock(type, cost) {
+  if (trophies >= cost) {
+    trophies -= cost;
+    localStorage.setItem("trophies", trophies);
+    document.getElementById("trophies").textContent = trophies;
+    alert(`${type} débloqué ! (non encore activé)`);
+  }
+}
 </script>
 </body>
 </html>
-
 
    
 
