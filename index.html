@@ -2,164 +2,137 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blokz Reflex Mobile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb'); /* style candy */
+      background-image: url('https://i.imgur.com/FoC9cYQ.jpeg'); /* Candy Crush style */
       background-size: cover;
       background-position: center;
-      color: #fff;
       margin: 0;
       padding: 0;
+      text-align: center;
       overflow: hidden;
+      color: #fff;
     }
 
     h1 {
-      text-align: center;
+      margin: 10px;
+      font-size: 24px;
       text-shadow: 2px 2px #000;
-      margin-top: 10px;
+    }
+
+    #info {
+      font-size: 16px;
+      background: rgba(0,0,0,0.5);
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: inline-block;
     }
 
     .button {
       padding: 10px 20px;
-      margin: 8px;
+      margin: 10px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
+      background: #ff69b4;
+      color: white;
       cursor: pointer;
-    }
-
-    #menu, #gameOver, #info {
-      text-align: center;
-      background: rgba(0,0,0,0.4);
-      padding: 10px;
-      border-radius: 12px;
-      margin: 10px auto;
-      max-width: 300px;
     }
 
     .block {
       width: 60px;
       height: 60px;
-      background: #333;
+      background: #fff;
       border-radius: 10px;
       position: absolute;
+      box-shadow: 0 0 5px #000;
       cursor: pointer;
-      transition: transform 0.1s;
+      animation: fadeout 0.5s forwards;
     }
 
-    .explosive { background: #e03e3e; }
-    .frozen { background: #3ec9e0; }
-    .frozen::after {
-      content: "❄"; position: absolute; top: 5px; right: 5px; font-size: 16px;
-    }
-    .bomb { background: #ffa500; }
-    .bomb::after {
-      content: "💣"; position: absolute; top: 5px; right: 5px; font-size: 16px;
+    @keyframes fadeout {
+      from {opacity: 1;}
+      to {opacity: 0;}
     }
 
-    #gameOver { display: none; }
-
-    #message {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 16px;
+    #gameOver {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 12px;
+      display: none;
     }
   </style>
 </head>
 <body>
+  <h1>Blokz Reflex 🍬</h1>
 
-<h1>🧱 Blokz Reflex</h1>
+  <div id="menu">
+    <p>Choisis ton mode :</p>
+    <button class="button" onclick="startGame('facile')">Facile</button>
+    <button class="button" onclick="startGame('moyen')">Moyen</button>
+    <button class="button" onclick="startGame('impossible')">Impossible</button>
+  </div>
 
-<div id="menu">
-  <p>Choisis ton mode :</p>
-  <button class="button" onclick="startGame('facile')">Facile</button>
-  <button class="button" onclick="startGame('moyen')">Moyen</button>
-  <button class="button" onclick="startGame('impossible')">Impossible</button>
-</div>
+  <div id="info" style="display:none;">
+    Score: <span id="score">0</span> | Vies: <span id="lives">2</span>
+  </div>
 
-<div id="info" style="display:none;">
-  Score : <span id="score">0</span> | Vies : <span id="lives">2</span>
-</div>
-
-<div id="message"></div>
-<div id="gameOver">
-  <h2>💀 Game Over</h2>
-  <p>Tu veux continuer ?</p>
-  <button class="button" onclick="watchAd()">📺 Regarder une pub</button>
-  <button class="button" onclick="restartGame()">🔁 Recommencer</button>
-</div>
-
-<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+  <div id="gameOver">
+    <h2>Game Over 💀</h2>
+    <button class="button" onclick="restartGame()">Recommencer</button>
+  </div>
 
 <script>
+  let score = 0;
+  let lives = 2;
+  let speed = 500;
+  let spawnInterval;
   const scoreEl = document.getElementById('score');
   const livesEl = document.getElementById('lives');
-  const infoEl = document.getElementById('info');
-  const menuEl = document.getElementById('menu');
-  const gameOverEl = document.getElementById('gameOver');
-  const messageEl = document.getElementById('message');
-  const popSound = document.getElementById('popSound');
-
-  let score = 0, lives = 2, speed = 5000, spawnLoop, maxLives = 2;
-  const mechanics = ['explosive', 'frozen', 'bomb'];
 
   function startGame(mode) {
-    if (mode === "facile") { speed = 5000; maxLives = 2; }
-    else if (mode === "moyen") { speed = 3000; maxLives = 1; }
-    else if (mode === "impossible") { speed = 1500; maxLives = 1; }
+    if (mode === 'facile') { speed = 500; lives = 2; }
+    else if (mode === 'moyen') { speed = 500; lives = 1; }
+    else if (mode === 'impossible') { speed = 500; lives = 1; }
 
     score = 0;
-    lives = maxLives;
     scoreEl.textContent = score;
     livesEl.textContent = lives;
-    infoEl.style.display = 'block';
-    menuEl.style.display = 'none';
-    gameOverEl.style.display = 'none';
-    spawnLoop = setInterval(spawnBlock, 900);
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('info').style.display = 'block';
+    spawnInterval = setInterval(spawnBlock, 700);
   }
 
   function spawnBlock() {
     const block = document.createElement('div');
     block.classList.add('block');
-    const isSpecial = Math.random() < 0.5;
 
-    if (isSpecial) {
-      const type = mechanics[Math.floor(Math.random() * mechanics.length)];
-      block.classList.add(type);
-      block.dataset.type = type;
-    } else {
-      block.dataset.type = 'normal';
-    }
+    const x = Math.random() * (window.innerWidth - 70);
+    const y = Math.random() * (window.innerHeight - 70);
+    block.style.left = x + 'px';
+    block.style.top = y + 'px';
 
-    const maxW = window.innerWidth - 70;
-    const maxH = window.innerHeight - 80;
-    block.style.left = Math.random() * maxW + "px";
-    block.style.top = Math.random() * maxH + "px";
+    block.addEventListener('click', () => {
+      score++;
+      scoreEl.textContent = score;
+      block.remove();
+    });
 
     document.body.appendChild(block);
 
-    const timeout = setTimeout(() => {
+    setTimeout(() => {
       if (document.body.contains(block)) {
-        if (block.dataset.type !== 'normal') loseLife();
         block.remove();
-      }
-    }, speed);
-
-    block.addEventListener('click', () => {
-      clearTimeout(timeout);
-      if (block.dataset.type !== 'normal') {
-        score++;
-        scoreEl.textContent = score;
-        popSound.currentTime = 0;
-        popSound.play();
-      } else {
         loseLife();
       }
-      block.remove();
-    });
+    }, speed);
   }
 
   function loseLife() {
@@ -169,24 +142,13 @@
   }
 
   function endGame() {
-    clearInterval(spawnLoop);
-    gameOverEl.style.display = 'block';
-    messageEl.textContent = '';
-  }
-
-  function watchAd() {
-    lives = 1;
-    livesEl.textContent = lives;
-    gameOverEl.style.display = 'none';
-    messageEl.textContent = "🎥 Tu as (imaginé) regardé une pub !";
-    spawnLoop = setInterval(spawnBlock, 900);
+    clearInterval(spawnInterval);
+    document.getElementById('gameOver').style.display = 'block';
   }
 
   function restartGame() {
-    menuEl.style.display = 'block';
-    infoEl.style.display = 'none';
-    gameOverEl.style.display = 'none';
-    document.querySelectorAll('.block').forEach(b => b.remove());
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('menu').style.display = 'block';
   }
 </script>
 </body>
