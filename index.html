@@ -1,17 +1,12 @@
-from pathlib import Path
-
-# Nouveau code HTML avec temps de disparition de 0.2 secondes pour les blocs
-html_code = """
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1629751270641-640bb3a2f481'); /* style candy crush */
+      background-image: url('https://images.unsplash.com/photo-1542461920-0b3e3b7cbd84');
       background-size: cover;
       background-position: center;
       color: #fff;
@@ -21,12 +16,12 @@ html_code = """
     }
 
     h1 {
-      margin-top: 10px;
+      margin-top: 20px;
       text-shadow: 2px 2px #000;
     }
 
     #menu, #game, #gameOver {
-      margin-top: 10px;
+      margin-top: 20px;
     }
 
     .button {
@@ -40,7 +35,7 @@ html_code = """
 
     #game {
       position: relative;
-      width: 100%;
+      width: 100vw;
       height: 70vh;
       overflow: hidden;
     }
@@ -48,11 +43,20 @@ html_code = """
     .block {
       width: 60px;
       height: 60px;
-      background: #ff69b4;
-      border-radius: 12px;
+      background: #333;
+      border-radius: 8px;
       cursor: pointer;
       position: absolute;
-      transition: all 0.2s;
+    }
+
+    .explosive { background: #e03e3e; }
+    .frozen { background: #3ec9e0; }
+    .frozen::after {
+      content: "❄"; position: absolute; top: 5px; right: 5px; font-size: 16px;
+    }
+    .bomb { background: #ffa500; }
+    .bomb::after {
+      content: "💣"; position: absolute; top: 5px; right: 5px; font-size: 16px;
     }
 
     #info {
@@ -69,7 +73,7 @@ html_code = """
       background: rgba(0,0,0,0.8);
       padding: 20px;
       border-radius: 12px;
-      margin: 20px auto;
+      margin: 40px auto;
       width: fit-content;
     }
 
@@ -81,7 +85,7 @@ html_code = """
 </head>
 <body>
 
-<h1>🍬 Blokz Reflex</h1>
+<h1>🧱 Blokz Reflex</h1>
 
 <div id="menu">
   <p>Choisis ton mode :</p>
@@ -105,6 +109,8 @@ html_code = """
   <button class="button" onclick="restartGame()">🔁 Recommencer</button>
 </div>
 
+<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+
 <script>
   const gameEl = document.getElementById('game');
   const scoreEl = document.getElementById('score');
@@ -113,20 +119,33 @@ html_code = """
   const menuEl = document.getElementById('menu');
   const gameOverEl = document.getElementById('gameOver');
   const messageEl = document.getElementById('message');
+  const popSound = document.getElementById('popSound');
 
   let score = 0;
   let lives = 2;
   let mode = "facile";
+  let removeTime = 5000;
   let spawnRate = 800;
-  let disappearTime = 5000;
   let maxLives = 2;
   let spawnLoop;
 
+  const mechanics = ['explosive', 'frozen', 'bomb'];
+
   function startGame(selectedMode) {
     mode = selectedMode;
-    if (mode === "facile") { disappearTime = 5000; maxLives = 2; spawnRate = 800; }
-    else if (mode === "moyen") { disappearTime = 3000; maxLives = 1; spawnRate = 800; }
-    else if (mode === "impossible") { disappearTime = 200; maxLives = 1; spawnRate = 2000; }
+    if (mode === "facile") {
+      removeTime = 5000;
+      spawnRate = 800;
+      maxLives = 2;
+    } else if (mode === "moyen") {
+      removeTime = 3000;
+      spawnRate = 600;
+      maxLives = 1;
+    } else if (mode === "impossible") {
+      removeTime = 200;
+      spawnRate = 1000;
+      maxLives = 1;
+    }
 
     score = 0;
     lives = maxLives;
@@ -138,6 +157,7 @@ html_code = """
     menuEl.style.display = 'none';
     gameOverEl.style.display = 'none';
 
+    clearInterval(spawnLoop);
     spawnLoop = setInterval(spawnBlock, spawnRate);
   }
 
@@ -145,29 +165,37 @@ html_code = """
     const block = document.createElement('div');
     block.classList.add('block');
 
-    const gameRect = gameEl.getBoundingClientRect();
-    const maxX = gameEl.clientWidth - 60;
-    const maxY = gameEl.clientHeight - 60;
+    let isSpecial = Math.random() < 0.5;
+    if (isSpecial) {
+      let type = mechanics[Math.floor(Math.random() * mechanics.length)];
+      block.classList.add(type);
+      block.dataset.type = type;
+    } else {
+      block.dataset.type = 'normal';
+    }
 
-    const x = Math.random() * maxX;
-    const y = Math.random() * maxY;
-
-    block.style.left = x + 'px';
-    block.style.top = y + 'px';
+    block.style.top = Math.random() * (gameEl.clientHeight - 60) + 'px';
+    block.style.left = Math.random() * (gameEl.clientWidth - 60) + 'px';
 
     gameEl.appendChild(block);
 
-    const timeout = setTimeout(() => {
+    const removeTimeout = setTimeout(() => {
       if (gameEl.contains(block)) {
-        loseLife();
+        if (block.dataset.type !== 'normal') {
+          loseLife();
+        }
         gameEl.removeChild(block);
       }
-    }, disappearTime);
+    }, removeTime);
 
     block.addEventListener('click', () => {
-      clearTimeout(timeout);
-      score += 1;
-      scoreEl.textContent = score;
+      clearTimeout(removeTimeout);
+      if (block.dataset.type !== 'normal') {
+        popSound.currentTime = 0;
+        popSound.play();
+        score += 1;
+        scoreEl.textContent = score;
+      }
       gameEl.removeChild(block);
     });
   }
@@ -204,10 +232,5 @@ html_code = """
 </script>
 </body>
 </html>
-"""
 
-# Enregistrement du fichier
-output_path = Path("/mnt/data/index.html")
-output_path.write_text(html_code, encoding="utf-8")
-output_path
 
