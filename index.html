@@ -1,58 +1,515 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      background-color: #111;
-      color: white;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px #0af;
-    }
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      font-size: 1.2rem;
-      background: #0af;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: 0 0 5px #0af;
-    }
-    button:hover {
-      background: #08c;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blokz Reflex - Full Game</title>
+<style>
+  /* RESET & BASE */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #111;
+    color: #fff;
+    overflow: hidden;
+  }
+  h1 {
+    text-align: center;
+    margin: 20px 0 10px 0;
+    text-shadow: 0 0 8px #0af;
+  }
+  button {
+    cursor: pointer;
+  }
+  #menu, #gameOver {
+    max-width: 360px;
+    margin: 20px auto;
+    background: rgba(0,0,0,0.6);
+    padding: 15px 20px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  #game {
+    position: relative;
+    margin: 20px auto;
+    max-width: 360px;
+    height: 400px;
+    background: rgba(20,20,30,0.9);
+    border-radius: 12px;
+    overflow: hidden;
+    user-select: none;
+  }
+  #infoBar {
+    max-width: 360px;
+    margin: 10px auto;
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 12px;
+    padding: 8px 16px;
+  }
+  #message {
+    max-width: 360px;
+    margin: 0 auto 10px auto;
+    text-align: center;
+    height: 25px;
+    font-weight: bold;
+    color: #0af;
+  }
+  .block {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    user-select: none;
+    background: #555;
+  }
+  .normal {
+    background: #777;
+  }
+  .explosive {
+    background: #e03e3e;
+  }
+  .frozen {
+    background: #3ec9e0;
+  }
+  .frozen::after {
+    content: "❄";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 18px;
+  }
+  .bomb {
+    background: #ffa500;
+  }
+  .bomb::after {
+    content: "💣";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 18px;
+  }
+  /* Boutique */
+  #shop {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 12px;
+    padding: 10px;
+    max-width: 320px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 10px #0af;
+  }
+  #shop h3 {
+    margin: 0 0 10px 0;
+    color: #0af;
+    text-align: center;
+  }
+  .shop-item {
+    background: #222;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  .shop-item button {
+    background: #0af;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+  .shop-item button:hover {
+    background: #06c;
+  }
+</style>
 </head>
 <body>
-  <h1>🧱 Blokz Reflex</h1>
+
+<h1>🧱 Blokz Reflex</h1>
+
+<div id="menu">
   <p>Choisis ton mode :</p>
   <button onclick="startGame('facile')">Facile</button>
   <button onclick="startGame('moyen')">Moyen</button>
   <button onclick="startGame('impossible')">Impossible</button>
+</div>
 
-  <script>
-    function startGame(mode) {
-      window.location.href = `game.html?mode=${mode}`;
+<div id="infoBar" style="display:none;">
+  <div>Score: <span id="score">0</span></div>
+  <div>Vies: <span id="lives">2</span></div>
+  <div>Trophées: <span id="trophies">0</span></div>
+</div>
+
+<div id="message"></div>
+
+<div id="game"></div>
+
+<div id="gameOver" style="display:none;">
+  <h2>💀 Game Over</h2>
+  <p>Veux-tu recommencer ?</p>
+  <button onclick="restartGame()">🔁 Recommencer</button>
+</div>
+
+<!-- Boutique -->
+<div id="shop" style="display:none;">
+  <h3>Boutique 🛒</h3>
+  <div id="shopItems"></div>
+</div>
+
+<script>
+(() => {
+  const modes = {
+    facile: { spawnDelay: 1200, maxLives: 2, startDisappear: 1000, minDisappear: 700, trophyMultiplier: 1 },
+    moyen: { spawnDelay: 900, maxLives: 1, startDisappear: 900, minDisappear: 500, trophyMultiplier: 1 },
+    impossible: { spawnDelay: 1000, maxLives: 1, startDisappear: 700, minDisappear: 200, trophyMultiplier: 1 },
+  };
+
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const trophiesEl = document.getElementById('trophies');
+  const infoBar = document.getElementById('infoBar');
+  const menuEl = document.getElementById('menu');
+  const gameEl = document.getElementById('game');
+  const gameOverEl = document.getElementById('gameOver');
+  const messageEl = document.getElementById('message');
+  const shopEl = document.getElementById('shop');
+  const shopItemsEl = document.getElementById('shopItems');
+
+  let score = 0;
+  let lives = 2;
+  let maxLives = 2;
+  let trophies = 0;
+  let currentMode = null;
+  let spawnInterval = null;
+  let blockDisappearTime = 700;
+  let trophyMultiplier = 1;
+
+  // Sauvegarde trophées et boutique
+  function saveProgress() {
+    localStorage.setItem('blokzTrophies', trophies);
+    localStorage.setItem('blokzShop', JSON.stringify(shop));
+  }
+  function loadProgress() {
+    trophies = parseInt(localStorage.getItem('blokzTrophies')) || 0;
+    try {
+      const shopData = JSON.parse(localStorage.getItem('blokzShop'));
+      if(shopData) {
+        Object.assign(shop, shopData);
+      }
+    } catch {}
+  }
+
+  // Blocs spéciaux achetés
+  const shop = {
+    lives: 0, // vies achetées, ajoutées au maxLives
+    trophyMultiplier: 1, // multiplicateur trophées (multiplie trophées gagnés)
+    blocks: {
+      explosive: false,
+      frozen: false,
+      bomb: false,
     }
-  </script>
+  };
+
+  // Liste des items en boutique
+  const shopItemsList = [
+    { id: 'multiplier', label: 'Multiplicateur x2', price: 10, type: 'multiplier' },
+    { id: 'extraLife', label: 'Vie supplémentaire', price: 5, type: 'life' },
+    { id: 'blockExplosive', label: 'Bloc Explosif', price: 15, type: 'block', blockType: 'explosive' },
+    { id: 'blockFrozen', label: 'Bloc Gelé', price: 15, type: 'block', blockType: 'frozen' },
+    { id: 'blockBomb', label: 'Bloc Bombe', price: 20, type: 'block', blockType: 'bomb' },
+  ];
+
+  // Met à jour affichage boutique et boutons
+  function renderShop() {
+    shopItemsEl.innerHTML = '';
+    shopItemsList.forEach(item => {
+      // Déjà acheté ?
+      let owned = false;
+      if(item.type === 'multiplier') owned = shop.trophyMultiplier > 1;
+      else if(item.type === 'life') owned = false; // vies peuvent s’acheter plusieurs fois
+      else if(item.type === 'block') owned = shop.blocks[item.blockType];
+
+      const div = document.createElement('div');
+      div.className = 'shop-item';
+      div.innerHTML = `<span>${item.label} (${item.price} 🏆)</span>`;
+
+      const btn = document.createElement('button');
+      btn.textContent = owned ? 'Acheté' : 'Acheter';
+      btn.disabled = owned || trophies < item.price;
+      btn.onclick = () => {
+        if(trophies >= item.price) {
+          trophies -= item.price;
+          if(item.type === 'multiplier') {
+            shop.trophyMultiplier = 2;
+            trophyMultiplier = 2;
+          } else if(item.type === 'life') {
+            shop.lives++;
+            maxLives++;
+            lives++;
+            livesEl.textContent = lives;
+          } else if(item.type === 'block') {
+            shop.blocks[item.blockType] = true;
+          }
+          saveProgress();
+          updateTrophies();
+          renderShop();
+          showMessage(`Achat de ${item.label} réussi !`);
+        }
+      };
+      div.appendChild(btn);
+      shopItemsEl.appendChild(div);
+    });
+  }
+
+  // Affiche message temporaire
+  function showMessage(text) {
+    messageEl.textContent = text;
+    setTimeout(() => {
+      if(messageEl.textContent === text) messageEl.textContent = '';
+    }, 3000);
+  }
+
+  // Démarrer une partie
+  window.startGame = function(mode) {
+    currentMode = mode;
+    const cfg = modes[mode];
+    maxLives = cfg.maxLives + shop.lives;
+    lives = maxLives;
+    score = 0;
+    trophyMultiplier = shop.trophyMultiplier;
+    blockDisappearTime = cfg.startDisappear;
+    spawnInterval = cfg.spawnDelay;
+
+    menuEl.style.display = 'none';
+    infoBar.style.display = 'flex';
+    gameOverEl.style.display = 'none';
+    shopEl.style.display = 'block';
+
+    updateScore();
+    livesEl.textContent = lives;
+    updateTrophies();
+
+    renderShop();
+    clearGame();
+
+    spawnBlocksLoop();
+  };
+
+  // Met à jour affichages score/trophées
+  function updateScore() {
+    scoreEl.textContent = score;
+  }
+  function updateTrophies() {
+    trophiesEl.textContent = trophies;
+  }
+
+  // Nettoyer l’aire de jeu
+  function clearGame() {
+    gameEl.innerHTML = '';
+    if(spawnBlocksLoop.timer) clearTimeout(spawnBlocksLoop.timer);
+  }
+
+  // Fin de partie
+  function gameOver() {
+    clearGame();
+    infoBar.style.display = 'none';
+    gameOverEl.style.display = 'block';
+    shopEl.style.display = 'none';
+    showMessage(`Partie terminée. Score final : ${score}`);
+    // sauvegarder trophées
+    saveProgress();
+  }
+
+  // Recommencer partie
+  window.restartGame = () => {
+    gameOverEl.style.display = 'none';
+    menuEl.style.display = 'block';
+    messageEl.textContent = '';
+  };
+
+  // Création d’un bloc
+  function createBlock() {
+    const block = document.createElement('div');
+    block.classList.add('block');
+
+    // Décider du type : bloc gris (10%), ou bloc coloré (90%)
+    const isGrey = Math.random() < 0.1;
+    if(isGrey) {
+      block.style.backgroundColor = '#888';
+      block.dataset.type = 'grey';
+    } else {
+      // Bloc coloré, choisir spécial ou normal selon shop
+      const specialTypes = [];
+      if(shop.blocks.explosive) specialTypes.push('explosive');
+      if(shop.blocks.frozen) specialTypes.push('frozen');
+      if(shop.blocks.bomb) specialTypes.push('bomb');
+      let chosenType = 'normal';
+      if(specialTypes.length) {
+        chosenType = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+      }
+      block.dataset.type = chosenType;
+      block.classList.add(chosenType);
+      // Couleur selon type
+      if(chosenType === 'normal') block.style.backgroundColor = '#4caf50';
+      else if(chosenType === 'explosive') block.style.backgroundColor = '#e03e3e';
+      else if(chosenType === 'frozen') block.style.backgroundColor = '#3ec9e0';
+      else if(chosenType === 'bomb') block.style.backgroundColor = '#ffa500';
+    }
+
+    // Position aléatoire dans le conteneur, sans sortir
+    const maxX = gameEl.clientWidth - 60;
+    const maxY = gameEl.clientHeight - 60;
+    const x = Math.floor(Math.random() * maxX);
+    const y = Math.floor(Math.random() * maxY);
+    block.style.left = x + 'px';
+    block.style.top = y + 'px';
+
+    // Timer disparition
+    let disappeared = false;
+    const disappearTime = blockDisappearTime + (Math.random() * 300 - 150); // +/- 150ms variation
+    const disappearTimer = setTimeout(() => {
+      disappeared = true;
+      gameEl.removeChild(block);
+      // Si bloc coloré non cliqué avant disparition => perdre vie
+      if(block.dataset.type !== 'grey') {
+        loseLife();
+      }
+    }, disappearTime);
+
+    // Click handler
+    block.addEventListener('click', e => {
+      e.stopPropagation();
+      if(disappeared) return;
+      clearTimeout(disappearTimer);
+      // Si bloc gris => game over direct
+      if(block.dataset.type === 'grey') {
+        gameOver();
+        return;
+      }
+      // Sinon bloc coloré : score + trophées
+      score++;
+      updateScore();
+      addTrophies(trophyMultiplier);
+
+      // Effet blocs spéciaux
+      if(block.dataset.type === 'explosive') {
+        explodeNearby(block);
+      } else if(block.dataset.type === 'frozen') {
+        freezeBlocks();
+      } else if(block.dataset.type === 'bomb') {
+        bombEffect();
+      }
+
+      // Animation clic
+      block.style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        if(block.parentElement) block.parentElement.removeChild(block);
+      }, 150);
+    });
+
+    gameEl.appendChild(block);
+  }
+
+  // Fonction boucle d’apparition
+  function spawnBlocksLoop() {
+    createBlock();
+    spawnBlocksLoop.timer = setTimeout(spawnBlocksLoop, spawnInterval);
+    // accélérer disparition progressivement mais pas en mode facile
+    if(currentMode !== 'facile') {
+      blockDisappearTime = Math.max(300, blockDisappearTime - 1);
+    }
+  }
+
+  // Perdre une vie
+  function loseLife() {
+    lives--;
+    if(lives < 0) {
+      gameOver();
+    } else {
+      livesEl.textContent = lives;
+      showMessage(`Tu as perdu une vie !`);
+    }
+  }
+
+  // Ajouter trophées
+  function addTrophies(n) {
+    trophies += n;
+    updateTrophies();
+    saveProgress();
+  }
+
+  // Effet explosif : supprime blocs proches (dans un rayon de 80px)
+  function explodeNearby(originBlock) {
+    const blocks = Array.from(gameEl.querySelectorAll('.block'));
+    const rectOrigin = originBlock.getBoundingClientRect();
+    blocks.forEach(b => {
+      if(b === originBlock) return;
+      const rect = b.getBoundingClientRect();
+      const distX = Math.abs(rect.left - rectOrigin.left);
+      const distY = Math.abs(rect.top - rectOrigin.top);
+      if(distX <= 80 && distY <= 80) {
+        // supprime ce bloc + score + trophées si coloré (pas gris)
+        if(b.dataset.type !== 'grey') {
+          score++;
+          updateScore();
+          addTrophies(trophyMultiplier);
+        }
+        if(b.parentElement) b.parentElement.removeChild(b);
+      }
+    });
+  }
+
+  // Effet gelé : ralentit apparition des blocs pour 5s
+  function freezeBlocks() {
+    const oldInterval = spawnInterval;
+    spawnInterval *= 2;
+    setTimeout(() => {
+      spawnInterval = oldInterval;
+    }, 5000);
+  }
+
+  // Effet bombe : perte d'une vie mais supprime tous les blocs gris à l'écran
+  function bombEffect() {
+    // supprime tous blocs gris à l'écran
+    const blocks = Array.from(gameEl.querySelectorAll('.block'));
+    blocks.forEach(b => {
+      if(b.dataset.type === 'grey') {
+        if(b.parentElement) b.parentElement.removeChild(b);
+      }
+    });
+    loseLife();
+  }
+
+  // Au clic sur zone vide : rien
+  gameEl.addEventListener('click', e => {
+    // rien, ne pas perdre vie ni rien
+  });
+
+  // Charger la progression au lancement
+  loadProgress();
+
+})();
+</script>
+
 </body>
 </html>
+
 
 
 
