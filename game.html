@@ -3,439 +3,383 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blokz Reflex - Gameplay</title>
+<title>Blokz Reflex - Gameplay + Boutique</title>
 <style>
   body {
-    margin: 0; 
-    background: #111;
-    color: white;
-    font-family: Arial, sans-serif;
+    margin: 0; background: #111; color: #eee; font-family: Arial, sans-serif;
     overflow: hidden;
+  }
+  #menu, #gameOver {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #222; padding: 20px; border-radius: 10px; text-align: center;
+    box-shadow: 0 0 15px #0ff;
+  }
+  #menu button, #gameOver button {
+    margin: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer;
+    border: none; border-radius: 5px; background: #0af; color: #fff;
+    transition: background-color 0.3s;
+  }
+  #menu button:hover, #gameOver button:hover {
+    background: #08c;
   }
   #game {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background: linear-gradient(135deg, #222, #444);
+    position: relative; width: 100vw; height: 100vh; overflow: hidden;
+    background: linear-gradient(135deg, #222 0%, #444 100%);
   }
   .block {
-    position: absolute;
-    border-radius: 10px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 0 10px #0af;
-    transition: transform 0.15s ease;
+    position: absolute; width: 60px; height: 60px; border-radius: 10px;
+    cursor: pointer; user-select: none;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: bold; font-size: 24px; color: #111;
+    transition: transform 0.2s ease;
   }
-  #score, #lives, #trophies {
-    position: fixed;
-    top: 15px;
-    font-weight: bold;
-    font-size: 18px;
-    padding: 6px 12px;
-    border-radius: 10px;
-    background: rgba(0,0,0,0.5);
-    box-shadow: 0 0 10px #0af;
-    user-select: none;
+  .normal {
+    background: #888; /* bloc gris */
   }
-  #score { right: 15px; }
-  #lives { right: 130px; }
-  #trophies { right: 260px; }
+  .explosive {
+    background: #e33; /* rouge vif */
+    box-shadow: 0 0 15px #f44;
+  }
+  .frozen {
+    background: #33ccff; /* bleu glacé */
+    box-shadow: 0 0 12px #3df;
+  }
+  .bomb {
+    background: #ffa500; /* orange */
+    box-shadow: 0 0 15px #ffb733;
+  }
+
+  #info {
+    position: fixed; top: 10px; right: 10px; font-size: 20px; 
+    background: #222a; padding: 10px 20px; border-radius: 10px;
+  }
+
+  #score, #lives {
+    margin: 0 10px;
+  }
+
   #message {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 22px;
-    font-weight: bold;
-    color: #0af;
-    user-select: none;
+    position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+    font-size: 22px; color: #0ff; text-shadow: 0 0 10px #0ff;
+    min-height: 28px;
   }
-  #btnShop {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    background: #0af;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-weight: bold;
-    z-index: 1100;
-    box-shadow: 0 0 6px #0af;
-    cursor: pointer;
+
+  /* Boutique */
+  #boutique {
+    position: fixed; top: 10px; left: 10px; background: #222a;
+    padding: 12px; border-radius: 10px; width: 260px;
+    box-shadow: 0 0 15px #0ff;
   }
-  #shopPanel {
-    display: none;
-    position: fixed;
-    top: 60px;
-    left: 15px;
-    width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    background: rgba(20,20,30,0.95);
-    border-radius: 12px;
-    padding: 15px;
-    z-index: 1200;
-    box-shadow: 0 0 15px #0af;
-    color: white;
-  }
-  #shopPanel h3 {
-    margin-top: 0;
-    text-align: center;
-    margin-bottom: 10px;
+  #boutique h2 {
+    margin-top: 0; margin-bottom: 12px; font-size: 20px; text-align: center;
   }
   .shop-item {
-    margin-bottom: 12px;
-    border-bottom: 1px solid #0af;
-    padding-bottom: 8px;
-  }
-  .shop-item strong {
-    font-size: 16px;
-  }
-  .shop-item p {
-    font-size: 13px;
-    margin: 5px 0;
+    background: #333; margin: 8px 0; padding: 10px; border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center;
   }
   .shop-item button {
-    margin-top: 4px;
-    padding: 6px 10px;
-    background: #0af;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
+    background: #0af; color: white; border: none; padding: 6px 10px;
+    border-radius: 6px; cursor: pointer;
   }
   .shop-item button:disabled {
-    background: #444;
+    background: #555;
     cursor: default;
   }
 </style>
 </head>
 <body>
 
-<div id="game"></div>
-
-<!-- Infos scores/vies/trophées -->
-<div id="score">Score: 0</div>
-<div id="lives">Vies: 3</div>
-<div id="trophies">Trophées: 0</div>
-<div id="message"></div>
-
-<!-- Bouton Boutique -->
-<button id="btnShop" title="Ouvrir la boutique">🏪 Boutique</button>
-
-<!-- Panneau Boutique -->
-<div id="shopPanel">
-  <h3>Boutique 🛒</h3>
-  <div id="shopItems"></div>
-  <button id="btnCloseShop">Fermer</button>
+<div id="menu">
+  <h1>Blokz Reflex</h1>
+  <p>Choisis un mode de difficulté :</p>
+  <button onclick="startGame('facile')">Facile</button>
+  <button onclick="startGame('moyen')">Moyen</button>
+  <button onclick="startGame('impossible')">Impossible</button>
 </div>
 
+<div id="boutique" style="display:none;">
+  <h2>Boutique</h2>
+  <div>Trophées : <span id="scoreBoutique">0</span></div>
+  <div class="shop-item">
+    <div>Multiplier de trophées x2 (500 trophées)</div>
+    <button id="buyMultiplier">Acheter</button>
+  </div>
+  <div class="shop-item">
+    <div>Vie supplémentaire (300 trophées)</div>
+    <button id="buyLife">Acheter</button>
+  </div>
+  <div class="shop-item">
+    <div>Bloc spécial "Super Bloc" (1000 trophées)</div>
+    <button id="buySpecialBlock">Acheter</button>
+  </div>
+</div>
+
+<div id="info" style="display:none;">
+  Vies : <span id="lives">0</span> | Trophées : <span id="score">0</span>
+</div>
+
+<div id="game"></div>
+
+<div id="message"></div>
+
+<div id="gameOver" style="display:none;">
+  <h2>Partie terminée !</h2>
+  <p>Score final : <span id="finalScore">0</span></p>
+  <button onclick="restartGame()">Rejouer</button>
+</div>
+
+<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3" preload="auto"></audio>
+
 <script>
-(() => {
-  const gameEl = document.getElementById('game');
   const scoreEl = document.getElementById('score');
   const livesEl = document.getElementById('lives');
-  const trophiesEl = document.getElementById('trophies');
+  const scoreBoutiqueEl = document.getElementById('scoreBoutique');
+  const infoEl = document.getElementById('info');
+  const menuEl = document.getElementById('menu');
+  const gameEl = document.getElementById('game');
+  const gameOverEl = document.getElementById('gameOver');
+  const finalScoreEl = document.getElementById('finalScore');
   const messageEl = document.getElementById('message');
-  const btnShop = document.getElementById('btnShop');
-  const shopPanel = document.getElementById('shopPanel');
-  const btnCloseShop = document.getElementById('btnCloseShop');
-  
-  // Paramètres du jeu
-  const gameWidth = window.innerWidth;
-  const gameHeight = window.innerHeight;
-  const blockSize = 80;
-  const blockDisappearTime = 3000; // en ms (3s)
-  const maxLives = 3;
-  
-  // Variables du jeu
+  const boutiqueEl = document.getElementById('boutique');
+
+  const buyMultiplierBtn = document.getElementById('buyMultiplier');
+  const buyLifeBtn = document.getElementById('buyLife');
+  const buySpecialBlockBtn = document.getElementById('buySpecialBlock');
+
+  const popSound = document.getElementById('popSound');
+
+  // Variables de jeu
   let score = 0;
-  let lives = maxLives;
-  let trophies = parseInt(localStorage.getItem('blokzTrophies')) || 0;
-  
-  let shopData = JSON.parse(localStorage.getItem('blokzShopData')) || {
-    multiplier: 1,
-    extraLives: 0,
-    specialBlocks: {
-      explosive: false,
-      frozen: false,
-      bomb: false,
-    },
+  let lives = 2;
+  let maxLives = 2;
+  let spawnInterval = null;
+  let blockDisappearTime = 700; // ms
+  let currentMode = null;
+  let multiplier = 1;
+  let hasSpecialBlock = false;
+
+  // Sauvegarde / Chargement
+  function saveData() {
+    const data = {
+      score,
+      multiplier,
+      lives: maxLives,
+      hasSpecialBlock
+    };
+    localStorage.setItem('blokzData', JSON.stringify(data));
+  }
+  function loadData() {
+    const data = JSON.parse(localStorage.getItem('blokzData'));
+    if (data) {
+      score = data.score || 0;
+      multiplier = data.multiplier || 1;
+      maxLives = data.lives || 2;
+      lives = maxLives;
+      hasSpecialBlock = data.hasSpecialBlock || false;
+    }
+  }
+
+  // Modes de jeu
+  const modes = {
+    facile: { spawnDelay: 1200, maxLives: 2, startDisappear: 1000, minDisappear: 700 },
+    moyen: { spawnDelay: 900, maxLives: 1, startDisappear: 900, minDisappear: 500 },
+    impossible: { spawnDelay: 1000, maxLives: 1, startDisappear: 700, minDisappear: 200 }
   };
-  
-  let gameRunning = false;
-  let blockTimer = null;
-  
-  function saveTrophies() {
-    localStorage.setItem('blokzTrophies', trophies.toString());
-  }
-  function saveShopData() {
-    localStorage.setItem('blokzShopData', JSON.stringify(shopData));
-  }
-  
-  // Mise à jour affichage scores/vies/trophées
-  function updateDisplays() {
-    scoreEl.textContent = `Score: ${score}`;
-    livesEl.textContent = `Vies: ${lives}`;
-    trophiesEl.textContent = `Trophées: ${trophies}`;
-  }
-  
-  // Fin de partie
-  function gameOver() {
-    gameRunning = false;
-    clearInterval(blockTimer);
-    messageEl.textContent = "Game Over! Clique sur la page pour rejouer.";
-  }
-  
-  // Perdre une vie
-  function loseLife() {
-    lives--;
-    updateDisplays();
-    if(lives <= 0) {
-      gameOver();
-    }
-  }
-  
-  // Crée un bloc avec un type aléatoire
-  function spawnBlock() {
-    if(!gameRunning) return;
-    
-    // Types de blocs possibles
-    const typesPossible = ['normal', 'gray']; // gris
-    if(shopData.specialBlocks.explosive) typesPossible.push('explosive');
-    if(shopData.specialBlocks.frozen) typesPossible.push('frozen');
-    if(shopData.specialBlocks.bomb) typesPossible.push('bomb');
-    
-    // On ajoute des blocs normaux colorés toujours
-    typesPossible.push('color');
-    
-    // Choix aléatoire du type
-    const type = typesPossible[Math.floor(Math.random() * typesPossible.length)];
-    
-    const block = document.createElement('div');
-    block.classList.add('block');
-    block.style.width = block.style.height = blockSize + 'px';
-    block.style.left = Math.random() * (gameWidth - blockSize) + 'px';
-    block.style.top = Math.random() * (gameHeight - blockSize) + 'px';
-    block.style.transform = 'scale(1)';
-    
-    // Style selon type
-    switch(type) {
-      case 'gray':
-        block.style.backgroundColor = '#888'; // gris = mort instantanée
-        break;
-      case 'explosive':
-        block.style.backgroundColor = 'orange';
-        break;
-      case 'frozen':
-        block.style.backgroundColor = 'cyan';
-        break;
-      case 'bomb':
-        block.style.backgroundColor = 'red';
-        break;
-      case 'color':
-        block.style.backgroundColor = 'limegreen';
-        break;
-      default:
-        block.style.backgroundColor = 'purple';
-    }
-    
-    // Click sur bloc
-    block.onclick = (e) => {
-      e.stopPropagation();
-      clearTimeout(disappearTimeout);
-      
-      if(type === 'gray') {
-        // Mort instantanée
-        lives = 0;
-        updateDisplays();
-        messageEl.textContent = "Bloc gris cliqué ! Game Over.";
+
+  // Démarre le jeu
+  function startGame(mode) {
+    loadData();
+    currentMode = mode;
+    const m = modes[mode];
+    maxLives = Math.max(m.maxLives, maxLives); // boutique peut augmenter vies max
+    lives = maxLives;
+    score = score || 0;
+
+    updateDisplay();
+
+    infoEl.style.display = 'inline-block';
+    menuEl.style.display = 'none';
+    gameOverEl.style.display = 'none';
+    boutiqueEl.style.display = 'block';
+    messageEl.textContent = '';
+    gameEl.innerHTML = '';
+    blockDisappearTime = m.startDisappear;
+
+    spawnInterval = setInterval(() => {
+      if (lives <= 0) {
         gameOver();
         return;
       }
-      
-      // Calcul des points gagnés
-      let pointsGained = 1;
-      if(type === 'explosive' && shopData.specialBlocks.explosive) pointsGained = 3;
-      else if(type === 'frozen' && shopData.specialBlocks.frozen) pointsGained = 2;
-      else if(type === 'bomb' && shopData.specialBlocks.bomb) pointsGained = 5;
-      
-      score += pointsGained;
-      trophies += pointsGained * shopData.multiplier;
-      
-      updateDisplays();
-      
-      messageEl.textContent = `Bien joué ! +${pointsGained} point${pointsGained>1?'s':''}`;
-      
-      // Animation disparition
-      block.style.transform = 'scale(0)';
-      setTimeout(() => {
-        if(gameEl.contains(block)) gameEl.removeChild(block);
-      }, 150);
-    };
-    
-    // Disparition automatique
-    const disappearTimeout = setTimeout(() => {
-      if(gameEl.contains(block)) {
-        gameEl.removeChild(block);
-        if(type !== 'gray') {
-          // Perdre une vie si bloc coloré non cliqué
-          loseLife();
-          messageEl.textContent = "Tu as raté un bloc ! -1 vie";
+      spawnBlock();
+
+      if (mode === 'impossible') {
+        if (score >= 10 && blockDisappearTime > m.minDisappear) {
+          blockDisappearTime -= 15;
+        } else if (score < 10 && blockDisappearTime < m.startDisappear) {
+          blockDisappearTime += 10;
+        }
+      } else {
+        if (blockDisappearTime > m.minDisappear) {
+          blockDisappearTime -= 2;
         }
       }
-    }, blockDisappearTime);
-    
-    gameEl.appendChild(block);
-  }
-  
-  // Démarrer la partie
-  function startGame() {
-    score = 0;
-    lives = maxLives + shopData.extraLives;
-    trophies = trophies; // chargés du localStorage
-    
-    updateDisplays();
-    messageEl.textContent = "Jeu démarré ! Clique sur les blocs colorés.";
-    gameRunning = true;
-    
-    // Faire spawn un bloc toutes les 1.2 secondes (ajuste si besoin)
-    if(blockTimer) clearInterval(blockTimer);
-    blockTimer = setInterval(spawnBlock, 1200);
-  }
-  
-  // Gestion bouton boutique
-  btnShop.onclick = () => {
-    updateShopItems();
-    shopPanel.style.display = 'block';
-  };
-  btnCloseShop.onclick = () => {
-    shopPanel.style.display = 'none';
-  };
-  
-  // Mise à jour de la boutique
-  function updateShopItems() {
-    const shopItemsEl = document.getElementById('shopItems');
-    shopItemsEl.innerHTML = '';
-    
-    const items = [
-      {
-        id: 'multiplier2',
-        name: 'Multiplicateur ×2',
-        description: 'Double tes trophées gagnés.',
-        price: 20,
-        bought: shopData.multiplier >= 2,
-        buyFunc: () => {
-          if(trophies >= 20 && shopData.multiplier < 2) {
-            trophies -= 20;
-            shopData.multiplier = 2;
-            saveTrophies();
-            saveShopData();
-            updateShopItems();
-            updateDisplays();
-          }
-        }
-      },
-      {
-        id: 'multiplier3',
-        name: 'Multiplicateur ×3',
-        description: 'Triple tes trophées gagnés.',
-        price: 50,
-        bought: shopData.multiplier >= 3,
-        buyFunc: () => {
-          if(trophies >= 50 && shopData.multiplier < 3) {
-            trophies -= 50;
-            shopData.multiplier = 3;
-            saveTrophies();
-            saveShopData();
-            updateShopItems();
-            updateDisplays();
-          }
-        }
-      },
-      {
-        id: 'extraLife',
-        name: 'Vie supplémentaire',
-        description: 'Ajoute une vie pour la partie en cours.',
-        price: 15,
-        bought: false,
-        buyFunc: () => {
-          if(trophies >= 15) {
-            trophies -= 15;
-            shopData.extraLives++;
-            lives++;
-            updateDisplays();
-            saveTrophies();
-            saveShopData();
-            updateShopItems();
-          }
-        }
-      },
-      {
-        id: 'explosiveBlock',
-        name: 'Bloc Explosif',
-        description: 'Active le bloc explosif (3 points).',
-        price: 30,
-        bought: shopData.specialBlocks.explosive,
-        buyFunc: () => {
-          if(trophies >= 30 && !shopData.specialBlocks.explosive) {
-            trophies -= 30;
-            shopData.specialBlocks.explosive = true;
-            saveTrophies();
-            saveShopData();
-            updateShopItems();
-            updateDisplays();
-          }
-        }
-      },
-      // Tu peux rajouter d'autres blocs spéciaux ici comme frozen, bomb...
-    ];
-    
-    for(const item of items) {
-      const itemEl = document.createElement('div');
-      itemEl.className = 'shop-item';
-      
-      const nameEl = document.createElement('strong');
-      nameEl.textContent = item.name;
-      itemEl.appendChild(nameEl);
-      
-      const descEl = document.createElement('p');
-      descEl.textContent = item.description;
-      itemEl.appendChild(descEl);
-      
-      const priceEl = document.createElement('span');
-      priceEl.textContent = `Prix : ${item.price} trophées`;
-      itemEl.appendChild(priceEl);
-      
-      const btnBuy = document.createElement('button');
-      btnBuy.textContent = item.bought ? 'Déjà acheté' : 'Acheter';
-      btnBuy.disabled = item.bought || trophies < item.price;
-      btnBuy.onclick = () => {
-        if(!btnBuy.disabled) {
-          item.buyFunc();
-        }
-      };
-      itemEl.appendChild(btnBuy);
-      
-      shopItemsEl.appendChild(itemEl);
-    }
-  }
-  
-  // Relancer le jeu au clic sur la page après game over
-  document.body.onclick = () => {
-    if(!gameRunning) {
-      startGame();
-    }
-  };
-  
-  // Initialisation
-  updateDisplays();
-  messageEl.textContent = "Clique pour commencer !";
-})();
-</script>
+    }, m.spawnDelay);
 
+    updateShopButtons();
+  }
+
+  function spawnBlock() {
+    let blockTypes = ['normal', 'explosive', 'frozen', 'bomb'];
+    if (hasSpecialBlock) {
+      blockTypes.push('special');
+    }
+
+    const typeProb = Math.random();
+    let type = 'normal';
+
+    // Probabilités modifiées (exemple)
+    if (typeProb > 0.5 && typeProb <= 0.7) type = 'explosive';
+    else if (typeProb > 0.7 && typeProb <= 0.9) type = 'frozen';
+    else if (typeProb > 0.9 && typeProb <= 0.97) type = 'bomb';
+    else if (typeProb > 0.97) type = 'special';
+
+    const block = document.createElement('div');
+    block.classList.add('block');
+    if (type !== 'normal') block.classList.add(type);
+
+    const gameRect = gameEl.getBoundingClientRect();
+    const size = 60;
+    const maxX = gameRect.width - size;
+    const maxY = gameRect.height - size;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+
+    block.style.left = x + 'px';
+    block.style.top = y + 'px';
+
+    gameEl.appendChild(block);
+
+    const disappearTimeout = setTimeout(() => {
+      if (!gameEl.contains(block)) return;
+
+      gameEl.removeChild(block);
+
+      if (type !== 'normal') {
+        loseLife();
+        messageEl.textContent = "Trop lent ! -1 vie";
+      } else {
+        messageEl.textContent = "";
+      }
+      updateDisplay();
+    }, blockDisappearTime);
+
+    block.onclick = () => {
+      popSound.currentTime = 0;
+      popSound.play();
+      clearTimeout(disappearTimeout);
+
+      if (type === 'normal') {
+        loseLife();
+        messageEl.textContent = "Mauvais bloc ! -1 vie";
+        gameEl.removeChild(block);
+      } else {
+        // Points selon type + multiplicateur
+        let points = 1;
+        if (type === 'explosive') points = 3;
+        else if (type === 'frozen') points = 2;
+        else if (type === 'bomb') points = 5;
+        else if (type === 'special') points = 10;
+
+        score += points * multiplier;
+        messageEl.textContent = `Bien joué ! +${points * multiplier} trophée${points * multiplier > 1 ? 's' : ''}`;
+        block.style.transform = 'scale(0)';
+        setTimeout(() => {
+          if (gameEl.contains(block)) gameEl.removeChild(block);
+        }, 150);
+      }
+      updateDisplay();
+
+      if (lives <= 0) gameOver();
+      saveData();
+      updateShopButtons();
+    };
+  }
+
+  function loseLife() {
+    lives--;
+    updateDisplay();
+    if (lives <= 0) {
+      gameOver();
+      saveData();
+    }
+  }
+
+  function gameOver() {
+    clearInterval(spawnInterval);
+    infoEl.style.display = 'none';
+    boutiqueEl.style.display = 'none';
+    gameOverEl.style.display = 'block';
+    finalScoreEl.textContent = score;
+    messageEl.textContent = '';
+  }
+
+  function restartGame() {
+    score = 0;
+    lives = 2;
+    maxLives = 2;
+    multiplier = 1;
+    hasSpecialBlock = false;
+    saveData();
+    gameOverEl.style.display = 'none';
+    menuEl.style.display = 'block';
+    gameEl.innerHTML = '';
+    messageEl.textContent = '';
+  }
+
+  function updateDisplay() {
+    livesEl.textContent = lives;
+    scoreEl.textContent = score;
+    scoreBoutiqueEl.textContent = score;
+  }
+
+  // Boutique
+  buyMultiplierBtn.onclick = () => {
+    if (score >= 500 && multiplier === 1) {
+      score -= 500;
+      multiplier = 2;
+      messageEl.textContent = "Multiplicateur x2 acheté !";
+      saveData();
+      updateDisplay();
+      updateShopButtons();
+    }
+  };
+  buyLifeBtn.onclick = () => {
+    if (score >= 300) {
+      score -= 300;
+      maxLives++;
+      lives++;
+      messageEl.textContent = "Vie supplémentaire achetée !";
+      saveData();
+      updateDisplay();
+      updateShopButtons();
+    }
+  };
+  buySpecialBlockBtn.onclick = () => {
+    if (score >= 1000 && !hasSpecialBlock) {
+      score -= 1000;
+      hasSpecialBlock = true;
+      messageEl.textContent = "Bloc spécial débloqué !";
+      saveData();
+      updateDisplay();
+      updateShopButtons();
+    }
+  };
+
+  function updateShopButtons() {
+    buyMultiplierBtn.disabled = score < 500 || multiplier > 1;
+    buyLifeBtn.disabled = score < 300;
+    buySpecialBlockBtn.disabled = score < 1000 || hasSpecialBlock;
+  }
+</script>
 </body>
 </html>
-
