@@ -1,298 +1,61 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>🧱 Blokz Reflex - Challenge</title>
-<style>
-  /* Reset & base */
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 0;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: #eee;
-    user-select: none;
-    overflow-x: hidden;
-  }
-  h1 {
-    text-align: center;
-    margin: 15px 0;
-    text-shadow: 0 0 10px #1f8aff;
-  }
-  button {
-    cursor: pointer;
-  }
-  .button {
-    background: #1f8aff;
-    border: none;
-    color: white;
-    padding: 10px 18px;
-    margin: 6px 4px;
-    font-size: 16px;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-  }
-  .button:hover {
-    background: #1066d0;
-  }
-
-  /* Conteneurs */
-  #menu, #gameContainer, #gameOver, #trophies, #shop {
-    max-width: 360px;
-    margin: 15px auto;
-    background: rgba(0,0,0,0.4);
-    border-radius: 10px;
-    padding: 15px;
-  }
-  #menu img {
-    width: 100%;
-    border-radius: 10px;
-    margin-bottom: 10px;
-  }
-  #instructions {
-    background: #0d1e38;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1.3em;
-  }
-  #instructions img {
-    width: 100%;
-    max-width: 320px;
-    margin: 10px 0;
-    border-radius: 8px;
-  }
-  #info {
-    text-align: center;
-    font-size: 18px;
-    margin: 10px auto;
-    max-width: 360px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px;
-    border-radius: 8px;
-    user-select:none;
-  }
-  #game {
-    position: relative;
-    height: 400px;
-    margin-top: 20px;
-    border-radius: 12px;
-    background: linear-gradient(45deg, #243b55, #141e30);
-    overflow: hidden;
-  }
-  .block {
-    width: 60px;
-    height: 60px;
-    position: absolute;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.1s ease-out;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 26px;
-    user-select:none;
-  }
-  .normal {
-    background: #666;
-  }
-  .explosive {
-    background: #e03e3e;
-  }
-  .frozen {
-    background: #3ec9e0;
-  }
-  .bomb {
-    background: #ffa500;
-  }
-  .block.gray {
-    background: #888;
-  }
-  .block::after {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    font-size: 18px;
-    pointer-events: none;
-  }
-  .frozen::after {
-    content: "❄";
-    color: #cff;
-  }
-  .bomb::after {
-    content: "💣";
-  }
-  #message {
-    text-align: center;
-    font-size: 16px;
-    margin-top: 12px;
-    height: 20px;
-    color: #ffcc00;
-    user-select:none;
-  }
-
-  #gameOver {
-    display: none;
-    text-align: center;
-  }
-  #gameOver h2 {
-    font-size: 24px;
-    margin-bottom: 10px;
-    color: #ff4444;
-    text-shadow: 0 0 10px #ff4444;
-  }
-  #gameOver p {
-    margin-bottom: 20px;
-  }
-
-  /* Trophies */
-  #trophies {
-    display: none;
-    font-size: 14px;
-    line-height: 1.4em;
-  }
-  #trophies h3 {
-    text-align: center;
-    margin-bottom: 10px;
-    color: #ffd700;
-    text-shadow: 0 0 5px #ffd700;
-  }
-  #trophies ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  #trophies li {
-    margin-bottom: 6px;
-    padding-left: 20px;
-    position: relative;
-  }
-  #trophies li::before {
-    content: "🏆";
-    position: absolute;
-    left: 0;
-  }
-
-  /* Boutique */
-  #shop {
-    display: none;
-    font-size: 14px;
-    line-height: 1.4em;
-    margin-top: 20px;
-  }
-  #shop h3 {
-    text-align: center;
-    margin-bottom: 10px;
-    color: #66ff66;
-    text-shadow: 0 0 5px #66ff66;
-  }
-  #shop ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  #shop li {
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  #shop button {
-    background: #4caf50;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  #shop button:disabled {
-    background: #888;
-    cursor: not-allowed;
-  }
-
-  /* Fond d'écran personnalisé bouton */
-  #customBgBtn {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    background: #1f8aff;
-    border: none;
-    color: white;
-    padding: 10px 14px;
-    font-size: 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    z-index: 1000;
-    transition: background 0.3s ease;
-  }
-  #customBgBtn:hover {
-    background: #1066d0;
-  }
-
-  /* Fenêtre choix fond d'écran */
-  #bgSelector {
-    display: none;
-    position: fixed;
-    top: 50px;
-    right: 12px;
-    background: rgba(0,0,0,0.8);
-    border-radius: 10px;
-    padding: 10px;
-    max-width: 280px;
-    z-index: 1000;
-  }
-  #bgSelector h4 {
-    margin: 0 0 10px 0;
-    text-align: center;
-    color: #66ccff;
-  }
-  #bgSelector img {
-    width: 100%;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    border: 3px solid transparent;
-    transition: border-color 0.3s ease;
-  }
-  #bgSelector img:hover {
-    border-color: #1f8aff;
-  }
-
-  /* Diff backgrounds possibles */
-  body.bg1 {
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
-  }
-  body.bg2 {
-    background: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
-  }
-  body.bg3 {
-    background: url('https://images.unsplash.com/photo-1526403228689-3cbbdb8dbe35?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
-  }
-
-</style>
+  <meta charset="UTF-8">
+  <title>Blokz Reflex</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #0af;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 1.2rem;
+      background: #0af;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 5px #0af;
+    }
+    button:hover {
+      background: #08c;
+    }
+  </style>
 </head>
 <body>
+  <h1>🧱 Blokz Reflex</h1>
+  <p>Choisis ton mode :</p>
+  <button onclick="startGame('facile')">Facile</button>
+  <button onclick="startGame('moyen')">Moyen</button>
+  <button onclick="startGame('impossible')">Impossible</button>
 
-<h1>🧱 Blokz Reflex</h1>
+  <script>
+    function startGame(mode) {
+      window.location.href = `game.html?mode=${mode}`;
+    }
+  </script>
+</body>
+</html>
 
-<!-- Bouton pour choisir le fond -->
-<button id="customBgBtn" title="Changer le fond d'écran">🎨 Fond</button>
 
-<!-- Sélecteur fond d'écran -->
-<div id="bgSelector">
-  <h4>Choisis ton fond</h4>
-  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Fond 1" data-bg="bg1" />
-  <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=600&q=80" alt="Fond 2" data-bg="bg2" />
-  <img src="https://images.unsplash.com/photo-1526403228689-3cbbdb8dbe35?auto=format&fit=crop&w=600&q=80" alt="Fond 3" data-bg="bg3" />
-</div>
 
-<!-- Menu principal -->
-<div id="menu">
-  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Fond Candy Motivant" />
-  <p>Choisis ton mode et tente de dépasser les 30 points pour gagner le challenge !</p>
-  <button class="button" data-difficulty="facile">Facile</button>
-  <button class="button" data-difficulty="moyen">Moyen</button>
-  <button class="button" data-difficulty="impossible">Impossible
 
 
    
