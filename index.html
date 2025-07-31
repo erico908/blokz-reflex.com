@@ -1,251 +1,299 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Blokz Reflex</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-size: cover;
-      background-position: center;
-      color: #fff;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🧱 Blokz Reflex - Challenge</title>
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #eee;
+    user-select: none;
+    overflow-x: hidden;
+  }
+  h1 {
+    text-align: center;
+    margin: 15px 0;
+    text-shadow: 0 0 10px #1f8aff;
+  }
+  button {
+    cursor: pointer;
+  }
+  .button {
+    background: #1f8aff;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    margin: 6px 4px;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
+  .button:hover {
+    background: #1066d0;
+  }
 
-    h1 {
-      margin-top: 20px;
-    }
+  /* Conteneurs */
+  #menu, #gameContainer, #gameOver, #trophies, #shop {
+    max-width: 360px;
+    margin: 15px auto;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 15px;
+  }
+  #menu img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  #instructions {
+    background: #0d1e38;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.3em;
+  }
+  #instructions img {
+    width: 100%;
+    max-width: 320px;
+    margin: 10px 0;
+    border-radius: 8px;
+  }
+  #info {
+    text-align: center;
+    font-size: 18px;
+    margin: 10px auto;
+    max-width: 360px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px;
+    border-radius: 8px;
+    user-select:none;
+  }
+  #game {
+    position: relative;
+    height: 400px;
+    margin-top: 20px;
+    border-radius: 12px;
+    background: linear-gradient(45deg, #243b55, #141e30);
+    overflow: hidden;
+  }
+  .block {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 26px;
+    user-select:none;
+  }
+  .normal {
+    background: #666;
+  }
+  .explosive {
+    background: #e03e3e;
+  }
+  .frozen {
+    background: #3ec9e0;
+  }
+  .bomb {
+    background: #ffa500;
+  }
+  .block.gray {
+    background: #888;
+  }
+  .block::after {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .frozen::after {
+    content: "❄";
+    color: #cff;
+  }
+  .bomb::after {
+    content: "💣";
+  }
+  #message {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 12px;
+    height: 20px;
+    color: #ffcc00;
+    user-select:none;
+  }
 
-    #menu, #game, #gameOver, #trophies, #shop {
-      margin-top: 20px;
-    }
+  #gameOver {
+    display: none;
+    text-align: center;
+  }
+  #gameOver h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #ff4444;
+    text-shadow: 0 0 10px #ff4444;
+  }
+  #gameOver p {
+    margin-bottom: 20px;
+  }
 
-    .button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+  /* Trophies */
+  #trophies {
+    display: none;
+    font-size: 14px;
+    line-height: 1.4em;
+  }
+  #trophies h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #ffd700;
+    text-shadow: 0 0 5px #ffd700;
+  }
+  #trophies ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #trophies li {
+    margin-bottom: 6px;
+    padding-left: 20px;
+    position: relative;
+  }
+  #trophies li::before {
+    content: "🏆";
+    position: absolute;
+    left: 0;
+  }
 
-    #game {
-      display: none;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin: 20px;
-      position: relative;
-      height: 60vh;
-    }
+  /* Boutique */
+  #shop {
+    display: none;
+    font-size: 14px;
+    line-height: 1.4em;
+    margin-top: 20px;
+  }
+  #shop h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #66ff66;
+    text-shadow: 0 0 5px #66ff66;
+  }
+  #shop ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #shop li {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #shop button {
+    background: #4caf50;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  #shop button:disabled {
+    background: #888;
+    cursor: not-allowed;
+  }
 
-    .block {
-      width: 20vw;
-      max-width: 60px;
-      aspect-ratio: 1/1;
-      background: #333;
-      border-radius: 8px;
-      cursor: pointer;
-      position: absolute;
-    }
+  /* Fond d'écran personnalisé bouton */
+  #customBgBtn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #1f8aff;
+    border: none;
+    color: white;
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.3s ease;
+  }
+  #customBgBtn:hover {
+    background: #1066d0;
+  }
 
-    .special1 { background: #e03e3e; }
-    .special2 { background: #3ec9e0; }
-    .special3 { background: #ffa500; }
+  /* Fenêtre choix fond d'écran */
+  #bgSelector {
+    display: none;
+    position: fixed;
+    top: 50px;
+    right: 12px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 280px;
+    z-index: 1000;
+  }
+  #bgSelector h4 {
+    margin: 0 0 10px 0;
+    text-align: center;
+    color: #66ccff;
+  }
+  #bgSelector img {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  #bgSelector img:hover {
+    border-color: #1f8aff;
+  }
 
-    #info {
-      margin-top: 10px;
-      font-size: 18px;
-      display: none;
-      padding: 8px 16px;
-    }
+  /* Diff backgrounds possibles */
+  body.bg1 {
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
+  }
+  body.bg2 {
+    background: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
+  }
+  body.bg3 {
+    background: url('https://images.unsplash.com/photo-1526403228689-3cbbdb8dbe35?auto=format&fit=crop&w=800&q=80') no-repeat center/cover;
+  }
 
-    #gameOver, #trophies, #shop {
-      display: none;
-    }
-
-    #instructions {
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    #image-demo {
-      width: 90%;
-      max-width: 300px;
-      margin: 10px auto;
-    }
-
-    #bgPicker {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 2;
-    }
-  </style>
+</style>
 </head>
 <body>
 
 <h1>🧱 Blokz Reflex</h1>
 
-<input type="file" id="bgPicker" accept="image/*" onchange="changeBackground(event)" title="Choisir un fond personnalisé">
+<!-- Bouton pour choisir le fond -->
+<button id="customBgBtn" title="Changer le fond d'écran">🎨 Fond</button>
 
+<!-- Sélecteur fond d'écran -->
+<div id="bgSelector">
+  <h4>Choisis ton fond</h4>
+  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Fond 1" data-bg="bg1" />
+  <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=600&q=80" alt="Fond 2" data-bg="bg2" />
+  <img src="https://images.unsplash.com/photo-1526403228689-3cbbdb8dbe35?auto=format&fit=crop&w=600&q=80" alt="Fond 3" data-bg="bg3" />
+</div>
+
+<!-- Menu principal -->
 <div id="menu">
-  <div id="instructions">
-    <p>📋 Clique sur les blocs spéciaux avant qu’ils disparaissent pour gagner des trophées 🏆.</p>
-    <p>💥 Clique sur un mauvais bloc = rien ! Ignore un bon bloc = perte de vie !</p>
-    <p>🛍️ Utilise tes trophées dans la boutique pour acheter des vies et des bonus.</p>
-    <img id="image-demo" src="https://upload.wikimedia.org/wikipedia/en/6/6f/Candy_Crush_icon.png" alt="Démo">
-  </div>
-  <p>Choisis ton mode :</p>
-  <button class="button" onclick="startGame('facile')">Facile</button>
-  <button class="button" onclick="startGame('moyen')">Moyen</button>
-  <button class="button" onclick="startGame('impossible')">Impossible</button>
-</div>
+  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Fond Candy Motivant" />
+  <p>Choisis ton mode et tente de dépasser les 30 points pour gagner le challenge !</p>
+  <button class="button" data-difficulty="facile">Facile</button>
+  <button class="button" data-difficulty="moyen">Moyen</button>
+  <button class="button" data-difficulty="impossible">Impossible
 
-<div id="info">
-  Score : <span id="score">0</span> | Vies : <span id="lives">2</span> | 🏆 : <span id="trophies">0</span>
-</div>
-
-<div id="game"></div>
-
-<div id="gameOver">
-  <p id="finalScore"></p>
-  <button class="button" onclick="retry()">Recommencer</button>
-  <button class="button" onclick="goToMenu()">Retour au menu</button>
-</div>
-
-<div id="shop">
-  <h2>🛍️ Boutique</h2>
-  <p>Achetez des bonus avec vos trophées</p>
-  <button class="button" onclick="buyLife()">+1 vie (100 🏆)</button>
-  <button class="button" onclick="buyBlock('special1', 200)">Bloc rouge (200 🏆)</button>
-  <button class="button" onclick="buyBlock('special2', 500)">Bloc bleu ❄ (500 🏆)</button>
-  <button class="button" onclick="buyBlock('special3', 1000)">Bloc orange 💣 (1000 🏆)</button>
-</div>
-
-<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
-
-<script>
-let score = 0;
-let lives = 2;
-let trophies = localStorage.getItem("trophies") ? parseInt(localStorage.getItem("trophies")) : 0;
-let currentMode = "";
-let blockDuration = 2000;
-let spawnRate = 1500;
-let gameInterval;
-
-function changeBackground(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => document.body.style.backgroundImage = `url('${reader.result}')`;
-  reader.readAsDataURL(file);
-}
-
-function startGame(mode) {
-  currentMode = mode;
-  score = 0;
-  lives = mode === "facile" ? 2 : 1;
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("instructions").style.display = "none";
-  document.getElementById("info").style.display = "inline-block";
-  document.getElementById("game").style.display = "flex";
-  document.getElementById("score").textContent = score;
-  document.getElementById("lives").textContent = lives;
-  document.getElementById("trophies").textContent = trophies;
-
-  if (mode === "facile") {
-    blockDuration = 5000;
-    spawnRate = 2000;
-  } else if (mode === "moyen") {
-    blockDuration = 3000;
-    spawnRate = 1000;
-  } else {
-    blockDuration = 700;
-    spawnRate = 1000;
-  }
-  gameInterval = setInterval(spawnBlock, spawnRate);
-}
-
-function spawnBlock() {
-  const game = document.getElementById("game");
-  const block = document.createElement("div");
-  block.className = "block";
-  block.style.left = `${Math.random() * 80}vw`;
-  block.style.top = `${Math.random() * 50}vh`;
-  const special = Math.random();
-  if (special < 0.5) block.classList.add("special1");
-
-  let clicked = false;
-  block.onclick = () => {
-    if (!clicked) {
-      clicked = true;
-      if (block.classList.contains("special1")) {
-        score++;
-        trophies++;
-        localStorage.setItem("trophies", trophies);
-        document.getElementById("score").textContent = score;
-        document.getElementById("trophies").textContent = trophies;
-        document.getElementById("popSound").play();
-      }
-      block.remove();
-    }
-  };
-  game.appendChild(block);
-
-  setTimeout(() => {
-    if (!clicked && block.classList.contains("special1")) {
-      lives--;
-      document.getElementById("lives").textContent = lives;
-      if (lives <= 0) endGame();
-    }
-    block.remove();
-  }, blockDuration);
-}
-
-function endGame() {
-  clearInterval(gameInterval);
-  document.getElementById("game").style.display = "none";
-  document.getElementById("info").style.display = "none";
-  document.getElementById("gameOver").style.display = "block";
-  document.getElementById("finalScore").textContent = `Partie terminée ! Score : ${score}`;
-}
-
-function retry() {
-  document.getElementById("gameOver").style.display = "none";
-  startGame(currentMode);
-}
-
-function goToMenu() {
-  document.getElementById("gameOver").style.display = "none";
-  document.getElementById("menu").style.display = "block";
-}
-
-function buyLife() {
-  if (trophies >= 100) {
-    trophies -= 100;
-    lives++;
-    localStorage.setItem("trophies", trophies);
-    document.getElementById("trophies").textContent = trophies;
-    document.getElementById("lives").textContent = lives;
-  }
-}
-
-function buyBlock(type, cost) {
-  if (trophies >= cost) {
-    trophies -= cost;
-    localStorage.setItem("trophies", trophies);
-    document.getElementById("trophies").textContent = trophies;
-    alert(`${type} débloqué ! (non encore activé)`);
-  }
-}
-</script>
-</body>
-</html>
 
    
 
