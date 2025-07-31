@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>Blokz Reflex</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1542461920-0b3e3b7cbd84');
+      background: linear-gradient(145deg, #330066, #6600cc);
       background-size: cover;
-      background-position: center;
       color: #fff;
       text-align: center;
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
 
     h1 {
@@ -20,7 +21,7 @@
       text-shadow: 2px 2px #000;
     }
 
-    #menu, #game, #gameOver {
+    #menu, #game, #gameOver, #trophies {
       margin-top: 20px;
     }
 
@@ -31,22 +32,27 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      background: #ff66cc;
+      color: white;
     }
 
     #game {
-      position: relative;
-      width: 100vw;
-      height: 70vh;
-      overflow: hidden;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 20px;
     }
 
     .block {
-      width: 60px;
-      height: 60px;
+      width: 20vw;
+      max-width: 60px;
+      aspect-ratio: 1/1;
       background: #333;
       border-radius: 8px;
       cursor: pointer;
       position: absolute;
+      transition: transform 0.1s;
     }
 
     .explosive { background: #e03e3e; }
@@ -62,19 +68,12 @@
     #info {
       margin-top: 10px;
       font-size: 18px;
-      background: rgba(0,0,0,0.6);
       display: inline-block;
       padding: 8px 16px;
-      border-radius: 10px;
     }
 
-    #gameOver {
+    #gameOver, #trophies {
       display: none;
-      background: rgba(0,0,0,0.8);
-      padding: 20px;
-      border-radius: 12px;
-      margin: 40px auto;
-      width: fit-content;
     }
 
     #message {
@@ -102,61 +101,47 @@
 
 <div id="message"></div>
 
-<div id="gameOver">
-  <h2>💀 Game Over</h2>
-  <p>Tu veux continuer ?</p>
-  <button class="button" onclick="watchAd()">📺 Regarder une pub</button>
-  <button class="button" onclick="restartGame()">🔁 Recommencer</button>
-</div>
-
 <audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
 
 <script>
-  const gameEl = document.getElementById('game');
   const scoreEl = document.getElementById('score');
   const livesEl = document.getElementById('lives');
   const infoEl = document.getElementById('info');
   const menuEl = document.getElementById('menu');
-  const gameOverEl = document.getElementById('gameOver');
+  const gameEl = document.getElementById('game');
   const messageEl = document.getElementById('message');
   const popSound = document.getElementById('popSound');
 
   let score = 0;
   let lives = 2;
-  let mode = "facile";
-  let removeTime = 5000;
-  let spawnRate = 800;
-  let maxLives = 2;
+  let speed = 700; // temps de disparition des blocs
+  let spawnRate = 1000; // temps entre chaque bloc
   let spawnLoop;
-
-  const mechanics = ['explosive', 'frozen', 'bomb'];
+  let mode = "";
+  let mechanics = ['explosive', 'frozen', 'bomb'];
 
   function startGame(selectedMode) {
     mode = selectedMode;
-    if (mode === "facile") {
-      removeTime = 5000;
-      spawnRate = 800;
-      maxLives = 2;
-    } else if (mode === "moyen") {
-      removeTime = 3000;
-      spawnRate = 600;
-      maxLives = 1;
-    } else if (mode === "impossible") {
-      removeTime = 200;
+    score = 0;
+    scoreEl.textContent = score;
+
+    if (mode === 'facile') {
+      speed = 5000;
       spawnRate = 1000;
-      maxLives = 1;
+      lives = 2;
+    } else if (mode === 'moyen') {
+      speed = 3000;
+      spawnRate = 1000;
+      lives = 1;
+    } else if (mode === 'impossible') {
+      speed = 700; // départ plus simple
+      spawnRate = 1000;
+      lives = 1;
     }
 
-    score = 0;
-    lives = maxLives;
-
-    scoreEl.textContent = score;
     livesEl.textContent = lives;
-    gameEl.innerHTML = '';
     infoEl.style.display = 'block';
     menuEl.style.display = 'none';
-    gameOverEl.style.display = 'none';
-
     clearInterval(spawnLoop);
     spawnLoop = setInterval(spawnBlock, spawnRate);
   }
@@ -165,72 +150,65 @@
     const block = document.createElement('div');
     block.classList.add('block');
 
-    let isSpecial = Math.random() < 0.5;
+    const isSpecial = Math.random() < 0.5;
     if (isSpecial) {
-      let type = mechanics[Math.floor(Math.random() * mechanics.length)];
+      const type = mechanics[Math.floor(Math.random() * mechanics.length)];
       block.classList.add(type);
       block.dataset.type = type;
     } else {
       block.dataset.type = 'normal';
     }
 
-    block.style.top = Math.random() * (gameEl.clientHeight - 60) + 'px';
-    block.style.left = Math.random() * (gameEl.clientWidth - 60) + 'px';
+    const maxW = window.innerWidth - 70;
+    const maxH = window.innerHeight - 70;
+    block.style.left = Math.random() * maxW + "px";
+    block.style.top = Math.random() * maxH + "px";
 
-    gameEl.appendChild(block);
+    document.body.appendChild(block);
 
-    const removeTimeout = setTimeout(() => {
-      if (gameEl.contains(block)) {
-        if (block.dataset.type !== 'normal') {
-          loseLife();
-        }
-        gameEl.removeChild(block);
+    const timeout = setTimeout(() => {
+      if (document.body.contains(block)) {
+        if (block.dataset.type !== 'normal') loseLife();
+        block.remove();
       }
-    }, removeTime);
+    }, speed);
 
     block.addEventListener('click', () => {
-      clearTimeout(removeTimeout);
+      clearTimeout(timeout);
       if (block.dataset.type !== 'normal') {
+        score++;
+        scoreEl.textContent = score;
         popSound.currentTime = 0;
         popSound.play();
-        score += 1;
-        scoreEl.textContent = score;
+        // augmente la difficulté si mode impossible
+        if (mode === 'impossible') adjustDifficulty();
+      } else {
+        loseLife();
       }
-      gameEl.removeChild(block);
+      block.remove();
     });
+  }
+
+  function adjustDifficulty() {
+    // Chaque 10 points, diminue la durée de vie des blocs de 50ms
+    if (score % 10 === 0 && speed > 200) {
+      speed -= 50;
+    }
   }
 
   function loseLife() {
     lives--;
     livesEl.textContent = lives;
-    if (lives <= 0) {
-      endGame();
-    }
+    if (lives <= 0) endGame();
   }
 
   function endGame() {
     clearInterval(spawnLoop);
-    gameOverEl.style.display = 'block';
-    messageEl.textContent = '';
-  }
-
-  function watchAd() {
-    messageEl.textContent = "🎥 Tu as regardé une pub (imaginée) !";
-    lives = 1;
-    livesEl.textContent = lives;
-    gameOverEl.style.display = 'none';
-    spawnLoop = setInterval(spawnBlock, spawnRate);
-  }
-
-  function restartGame() {
-    menuEl.style.display = 'block';
-    infoEl.style.display = 'none';
-    gameEl.innerHTML = '';
-    gameOverEl.style.display = 'none';
-    messageEl.textContent = '';
+    messageEl.textContent = "💀 Game Over";
   }
 </script>
 </body>
 </html>
+
 
 
