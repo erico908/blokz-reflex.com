@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blokz Reflex - Gameplay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    #topBar {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: #000000aa;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+    }
+    #trophies {
+      font-weight: bold;
+    }
+    #shopBtn {
+      background: #0af;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    #gameArea {
+      margin-top: 50px;
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      overflow: hidden;
+      background: #222;
+    }
+    .block {
+      width: 60px;
+      height: 60px;
+      position: absolute;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .normal { background: gray; }
+    .explosive { background: red; }
+    .frozen { background: cyan; }
+    .bomb { background: orange; }
+    #stats {
+      text-align: center;
+      margin: 10px;
+      font-size: 18px;
+    }
+    #gameOver {
+      display: none;
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    button#restart {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      background: #0af;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="topBar">
+  <div id="trophies">🏆 0</div>
+  <button id="shopBtn">🏪 Boutique</button>
+</div>
+
+<div id="stats">
+  Score : <span id="score">0</span> | Vies : <span id="lives">2</span>
+</div>
+
+<div id="gameArea"></div>
+
+<div id="gameOver">
+  <p>💀 Game Over</p>
+  <button id="restart">🔁 Rejouer</button>
+</div>
+
+<audio id="popSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const mode = urlParams.get('mode') || 'facile';
+
+  const modes = {
+    facile: { spawnDelay: 1200, maxLives: 2, disappearTime: 1000 },
+    moyen: { spawnDelay: 900, maxLives: 1, disappearTime: 800 },
+    impossible: { spawnDelay: 700, maxLives: 1, disappearTime: 500 }
+  };
+
+  const gameArea = document.getElementById('gameArea');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const trophiesEl = document.getElementById('trophies');
+  const gameOverEl = document.getElementById('gameOver');
+  const restartBtn = document.getElementById('restart');
+  const popSound = document.getElementById('popSound');
+
+  let score = 0;
+  let lives = modes[mode].maxLives;
+  let disappearTime = modes[mode].disappearTime;
+  let spawnLoop;
+
+  let trophies = parseInt(localStorage.getItem("blokzTrophies") || "0");
+  trophiesEl.textContent = `🏆 ${trophies}`;
+
+  function updateTrophies(val) {
+    trophies += val;
+    localStorage.setItem("blokzTrophies", trophies);
+    trophiesEl.textContent = `🏆 ${trophies}`;
+  }
+
+  function spawnBlock() {
+    const blockTypes = ['normal', 'explosive', 'frozen', 'bomb'];
+    let type = 'normal';
+    const r = Math.random();
+    if (r > 0.5 && r <= 0.7) type = 'explosive';
+    else if (r > 0.7 && r <= 0.9) type = 'frozen';
+    else if (r > 0.9) type = 'bomb';
+
+    const block = document.createElement('div');
+    block.classList.add('block', type);
+
+    const size = 60;
+    const maxX = gameArea.clientWidth - size;
+    const maxY = gameArea.clientHeight - size;
+    block.style.left = Math.random() * maxX + 'px';
+    block.style.top = Math.random() * maxY + 'px';
+
+    gameArea.appendChild(block);
+
+    const timeout = setTimeout(() => {
+      if (block.parentNode) {
+        if (type !== 'normal') loseLife(); // tu perds si tu n’as pas cliqué sur un bloc coloré
+        block.remove();
+      }
+    }, disappearTime);
+
+    block.onclick = () => {
+      clearTimeout(timeout);
+      if (type === 'normal') {
+        endGame();
+      } else {
+        popSound.currentTime = 0;
+        popSound.play();
+        block.remove();
+        let points = 1;
+        if (type === 'explosive') points = 3;
+        else if (type === 'frozen') points = 2;
+        else if (type === 'bomb') points = 5;
+        score += points;
+        updateTrophies(points);
+        scoreEl.textContent = score;
+      }
+    };
+  }
+
+  function loseLife() {
+    lives--;
+    livesEl.textContent = lives;
+    if (lives <= 0) endGame();
+  }
+
+  function endGame() {
+    clearInterval(spawnLoop);
+    gameOverEl.style.display = 'block';
+  }
+
+  restartBtn.onclick = () => {
+    window.location.href = 'index.html';
+  };
+
+  // Start game
+  spawnLoop = setInterval(spawnBlock, modes[mode].spawnDelay);
+</script>
+
+</body>
+</html>
