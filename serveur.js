@@ -1,65 +1,60 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const bodyParser = require('body-parser');
+
 const app = express();
-const port = process.env.PORT || 3000;
-
 app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+app.use(bodyParser.json());
 
-const DB_FILE = './db.json';
+const SECRET_KEY = 'CHANGE_MOI_POUR_UN_SECRET_TRES_FORT';
 
-function readDB() {
-  if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, '{}');
-  return JSON.parse(fs.readFileSync(DB_FILE));
+const users = []; // Stockage temporaire en mémoire (à remplacer par une vraie base)
+
+// Middleware pour vérifier le token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if(!token) return res.status(401).json({ message: 'Token manquant' });
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if(err) return res.status(403).json({ message: 'Token invalide' });
+    req.user = user;
+    next();
+  });
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
+// Inscription
+app.post('/signup', async (req, res) => {
+  const { email, password } = req.body;
+  if(!email || !password) return res.status(400).json({ message: 'Email et mot de passe requis' });
 
-// Login / create user
-app.post('/api/login', (req, res) => {
-  const { username } = req.body;
-  if (!username) return res.status(400).send('Username required');
+  if(users.find(u => u.email === email)) return res.status(400).json({ message: 'Email déjà utilisé' });
 
-  const db = readDB();
-  if (!db[username]) {
-    db[username] = {
-      trophies: 0,
-      lives: 1,
-      background: 'default'
-    };
-    writeDB(db);
-  }
-
-  res.json({ message: 'Logged in', user: db[username] });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  users.push({ email, password: hashedPassword });
+  res.status(201).json({ message: 'Utilisateur créé' });
 });
 
-// Get user data
-app.get('/api/user/:username', (req, res) => {
-  const db = readDB();
-  const user = db[req.params.username];
-  if (!user) return res.status(404).send('User not found');
-  res.json(user);
+// Connexion
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email);
+  if(!user) return res.status(400).json({ message: 'Utilisateur non trouvé' });
+
+  const valid = await bcrypt.compare(password, user.password);
+  if(!valid) return res.status(400).json({ message: 'Mot de passe incorrect' });
+
+  const token = jwt.sign({ email }, SECRET_KEY, { expiresIn: '1h' });
+  res.json({ token });
 });
 
-// Save user data
-app.post('/api/save', (req, res) => {
-  const { username, trophies, lives, background } = req.body;
-  if (!username) return res.status(400).send('Username required');
-
-  const db = readDB();
-  if (!db[username]) return res.status(404).send('User not found');
-
-  db[username] = { trophies, lives, background };
-  writeDB(db);
-  res.json({ message: 'Saved successfully' });
+// Exemple route protégée (jeu)
+app.get('/profile', authenticateToken, (req, res) => {
+  res.json({ email: req.user.email });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`🚀 Blokz Server running at http://localhost:${port}`);
-});
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Serveur lancé sur http://localhost:${PORT}`));
+
