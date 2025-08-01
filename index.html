@@ -1,281 +1,103 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>🧱 Blokz Reflex - Nouvelle version</title>
-<style>
-  /* RESET & BASE */
-  * {
-    box-sizing: border-box;
-  }
-  body, html {
-    margin: 0; padding: 0;
-    height: 100%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #111;
-    color: #eee;
-    overflow-y: auto;
-    background-size: cover;
-    background-position: center;
-    transition: background 0.4s ease;
-  }
-  h1 {
-    margin: 0 0 10px;
-    text-align: center;
-    text-shadow: 0 0 8px #0af;
-  }
-  button {
-    cursor: pointer;
-  }
-  /* MENU & PAGES */
-  #menu, #readyScreen, #gameOver, #game, #instructions {
-    max-width: 400px;
-    margin: 20px auto;
-    background: rgba(20,20,30,0.85);
-    padding: 20px 25px;
-    border-radius: 12px;
-    box-shadow: 0 0 15px #0af;
-  }
-  #instructions {
-    background: rgba(10,10,20,0.7);
-    font-size: 14px;
-    line-height: 1.5;
-    color: #ccc;
-    margin-top: 5px;
-  }
-  #info {
-    max-width: 400px;
-    margin: 10px auto;
-    text-align: center;
-    font-size: 18px;
-    display: none;
-    user-select: none;
-  }
-  #game {
-    position: relative;
-    max-width: 400px;
-    height: 400px;
-    margin: 20px auto;
-    background: rgba(30,30,40,0.9);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: inset 0 0 10px #0af;
-  }
-  #gameOver {
-    display: none;
-    text-align: center;
-  }
-  #message {
-    text-align: center;
-    height: 30px;
-    margin-top: 10px;
-    font-weight: bold;
-    color: #0af;
-    min-height: 1.5em;
-  }
-  /* BOUTONS */
-  .button {
-    background: #0af;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 18px;
-    margin: 10px 6px 0 6px;
-    font-size: 16px;
-    transition: background 0.3s;
-    user-select: none;
-  }
-  .button:hover:not(:disabled) {
-    background: #06c;
-  }
-  .button:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-  /* BLOC */
-  .block {
-    width: 60px;
-    height: 60px;
-    position: absolute;
-    border-radius: 10px;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.15s;
-    box-shadow: 0 0 5px #000 inset;
-    background: #555;
-  }
-  .normal { background: #777; }
-  .explosive { background: #e03e3e; box-shadow: 0 0 8px #e03e3e; }
-  .frozen { background: #3ec9e0; box-shadow: 0 0 8px #3ec9e0; }
-  .frozen::after {
-    content: "❄";
-    position: absolute;
-    top: 5px; right: 6px;
-    font-size: 20px;
-    pointer-events: none;
-  }
-  .bomb { background: #ffa500; box-shadow: 0 0 10px #ffa500; }
-  .bomb::after {
-    content: "💣";
-    position: absolute;
-    top: 5px; right: 6px;
-    font-size: 20px;
-    pointer-events: none;
-  }
-  /* BOUTIQUE */
-  #shop {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.7);
-    padding: 10px 12px;
-    border-radius: 10px;
-    width: 180px;
-    color: #0af;
-    font-size: 14px;
-    box-shadow: 0 0 12px #0af;
-    user-select: none;
-    z-index: 1100;
-  }
-  #shop h3 {
-    margin: 0 0 8px 0;
-    font-weight: 700;
-    font-size: 18px;
-    color: #0af;
-  }
-  #shop p {
-    margin: 4px 0;
-  }
-  #shop button {
-    font-size: 14px;
-    margin-top: 6px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    user-select: none;
-  }
-  #trophiesDisplay {
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: #0af;
-  }
-  /* CUSTOM BG BUTTON */
-  #btnChangeBg {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: #0af;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-weight: bold;
-    z-index: 1200;
-    box-shadow: 0 0 10px #0af;
-    user-select: none;
-  }
-  #btnChangeBg:hover {
-    background: #06c;
-  }
-  #inputBg {
-    display: none;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blokz Reflex - Boutique & Fond perso</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #222;
+      color: #eee;
+      margin: 0; padding: 20px;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 0.5s ease;
+    }
+    h1 { margin-bottom: 10px; }
+    #stats {
+      margin-bottom: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #boutique {
+      background: #333;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+    #boutique h2 {
+      margin-top: 0;
+    }
+    #fond-container {
+      margin-top: 20px;
+      background: #333;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+    #fond-container input[type="file"] {
+      display: none;
+    }
+  </style>
 </head>
 <body>
 
-<h1>🧱 Blokz Reflex</h1>
-
-<button id="btnChangeBg" title="Changer le fond">🎨</button>
-<input type="file" id="inputBg" accept="image/*" />
-
-<!-- MENU PRINCIPAL -->
-<div id="menu">
-  <p style="text-align:center; font-weight:bold; font-size:18px; margin-bottom: 12px;">Choisis ta difficulté :</p>
-  <div style="display:flex; justify-content:center; gap:10px;">
-    <button class="button" data-mode="facile">Facile</button>
-    <button class="button" data-mode="moyen">Moyen</button>
-    <button class="button" data-mode="impossible">Impossible</button>
-  </div>
-
-  <div id="menuInstructions" style="margin-top:20px; text-align:left; max-width: 360px; margin-left: auto; margin-right: auto;">
-    <h3>Instructions</h3>
-    <ul style="padding-left: 20px; color:#ccc;">
-      <li>Clique sur les blocs <span style="color:#0af;">colorés</span> pour gagner des points.</li>
-      <li><strong>Ne clique pas</strong> sur les blocs gris (normaux), sinon tu perds instantanément.</li>
-      <li>Si tu <strong>ne cliques pas</strong> sur un bloc coloré avant qu'il disparaisse, tu perds une vie.</li>
-      <li>Le temps pour cliquer sur les blocs diminue au fur et à mesure.</li>
-      <li>Dans le mode <strong>Impossible</strong>, la difficulté augmente beaucoup après 10 points.</li>
-      <li>Utilise la boutique pour acheter des vies, des blocs spéciaux et des multiplicateurs.</li>
+  <h1>Blokz Reflex</h1>
+  <div id="stats">
+    <div>Vies : <span id="lives">3</span></div>
+    <div>Trophées : <span id="trophies">0</span></div>
+    <div>Multiplicateur : <span id="multiplier">1</span></div>
+    <div>Blocs Spéciaux :</div>
+    <ul>
+      <li>Explosif : <span id="explosiveCount">0</span></li>
+      <li>Gelé : <span id="frozenCount">0</span></li>
+      <li>Bombe : <span id="bombCount">0</span></li>
     </ul>
   </div>
-</div>
 
-<!-- ÉCRAN PRÊT AVANT DE JOUER -->
-<div id="readyScreen" style="display:none; max-width:400px; margin:20px auto; background: rgba(20,20,30,0.85); padding:20px 25px; border-radius:12px; box-shadow:0 0 15px #0af; user-select:none;">
-  <h2 style="text-align:center; margin-bottom:10px;">Prêt à jouer ?</h2>
-  <div id="readyShop" style="position:relative; margin-bottom: 20px;">
-    <div id="trophiesDisplayReady" style="font-weight:bold; color:#0af; margin-bottom:10px; text-align:center;">Trophées : 0</div>
-    <div id="shop" style="position:static; max-width:none; box-shadow:none; background: rgba(0,0,0,0.7); padding: 10px; border-radius:10px;">
-      <h3>Boutique</h3>
-      <p><strong>Vies :</strong> <span id="shopLivesCount">0</span></p>
-      <button id="buyLifeBtn" class="button" style="width:100%;">Acheter vie (5 trophées)</button>
-      <p><strong>Multiplicateur :</strong> x<span id="multiplierCount">1</span></p>
-      <button id="buyMultiplierBtn" class="button" style="width:100%;">Acheter multiplicateur (10 trophées)</button>
-      <p><strong>Blocs spéciaux :</strong></p>
-      <button id="buyExplosiveBtn" class="button" style="width:100%;">Bloc explosif (20 trophées)</button>
-      <button id="buyFrozenBtn" class="button" style="width:100%;">Bloc gelé (20 trophées)</button>
-      <button id="buyBombBtn" class="button" style="width:100%;">Bloc bombe (30 trophées)</button>
-    </div>
+  <div id="boutique">
+    <h2>Boutique</h2>
+    <button id="buyLifeBtn">Acheter vie (5 trophées)</button>
+    <button id="buyMultiplierBtn">Acheter multiplicateur x2 (10 trophées)</button>
+    <button id="buyExplosiveBtn">Acheter bloc explosif (20 trophées)</button>
+    <button id="buyFrozenBtn">Acheter bloc gelé (20 trophées)</button>
+    <button id="buyBombBtn">Acheter bloc bombe (30 trophées)</button>
   </div>
-  <div style="text-align:center;">
-    <button id="startPlayingBtn" class="button" disabled>Jouer</button>
-    <button id="backToMenuBtn" class="button" style="background:#e03e3e;">Retour au menu</button>
+
+  <div id="fond-container">
+    <h2>Changer le fond</h2>
+    <button id="btnChangeBg">Choisir une image</button>
+    <input type="file" id="inputBg" accept="image/*" />
   </div>
-</div>
-
-<!-- INFOS SCORE ET VIES -->
-<div id="info" style="user-select:none;">
-  Score : <span id="score">0</span> &nbsp;&nbsp;|&nbsp;&nbsp; Vies : <span id="lives">1</span> &nbsp;&nbsp;|&nbsp;&nbsp; Trophées : <span id="trophies">0</span> &nbsp;&nbsp;|&nbsp;&nbsp; Multiplicateur : x<span id="multiplier">1</span>
-</div>
-
-<!-- ZONE DE JEU -->
-<div id="game" style="display:none; position:relative;"></div>
-
-<!-- ÉCRAN DE FIN DE PARTIE -->
-<div id="gameOver" style="display:none;">
-  <h2>Partie terminée !</h2>
-  <p>Score final : <span id="finalScore">0</span></p>
-  <p>Trophées gagnés : <span id="finalTrophies">0</span></p>
-  <div>
-    <button id="restartBtn" class="button">Recommencer</button>
-    <button id="reviveBtn" class="button">Revive (utilise une vie)</button>
-  </div>
-</div>
 
 <script>
-(() => {
-  // DOM elements
-  const menu = document.getElementById('menu');
-  const readyScreen = document.getElementById('readyScreen');
-  const game = document.getElementById('game');
-  const gameOver = document.getElementById('gameOver');
-  const info = document.getElementById('info');
-  const scoreSpan = document.getElementById('score');
+  // Variables du jeu
+  let lives = 3;
+  let trophies = 0;
+  let multiplier = 1;
+  let explosiveCount = 0;
+  let frozenCount = 0;
+  let bombCount = 0;
+
+  // Cibles DOM
   const livesSpan = document.getElementById('lives');
   const trophiesSpan = document.getElementById('trophies');
   const multiplierSpan = document.getElementById('multiplier');
-  const finalScoreSpan = document.getElementById('finalScore');
-  const finalTrophiesSpan = document.getElementById('finalTrophies');
-  const startPlayingBtn = document.getElementById('startPlayingBtn');
-  const backToMenuBtn = document.getElementById('backToMenuBtn');
-  const restartBtn = document.getElementById('restartBtn');
-  const reviveBtn = document.getElementById('reviveBtn');
+  const explosiveCountSpan = document.getElementById('explosiveCount');
+  const frozenCountSpan = document.getElementById('frozenCount');
+  const bombCountSpan = document.getElementById('bombCount');
 
-  const trophiesDisplayReady = document.getElementById('trophiesDisplayReady');
-  const shopLivesCount = document.getElementById('shopLivesCount');
   const buyLifeBtn = document.getElementById('buyLifeBtn');
   const buyMultiplierBtn = document.getElementById('buyMultiplierBtn');
-  const multiplierCountSpan = document.getElementById('multiplierCount');
   const buyExplosiveBtn = document.getElementById('buyExplosiveBtn');
   const buyFrozenBtn = document.getElementById('buyFrozenBtn');
   const buyBombBtn = document.getElementById('buyBombBtn');
@@ -283,417 +105,132 @@
   const btnChangeBg = document.getElementById('btnChangeBg');
   const inputBg = document.getElementById('inputBg');
 
-  // GAME SETTINGS & STATE
-  let difficulty = null;
-  let score = 0;
-  let lives = 1; // vies achetées
-  let trophies = 0;
-  let multiplier = 1;
-  let blocks = [];
-  let blockTimer = null;
-  let spawnInterval = null;
-  let gameRunning = false;
-  let blockTime = 5000; // temps initial bloc (ms)
-  let maxBlocksOnScreen = 3;
-  let specialBlocksCount = { explosive:0, frozen:0, bomb:0 };
-
-  // Sauvegarde et chargement
-  const STORAGE_KEY = 'blokzDataV2';
+  // Sauvegarde & Chargement des données dans localStorage
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      trophies,
-      lives,
-      multiplier,
-      specialBlocksCount
-    }));
+    localStorage.setItem('blokzLives', lives);
+    localStorage.setItem('blokzTrophies', trophies);
+    localStorage.setItem('blokzMultiplier', multiplier);
+    localStorage.setItem('blokzExplosive', explosiveCount);
+    localStorage.setItem('blokzFrozen', frozenCount);
+    localStorage.setItem('blokzBomb', bombCount);
   }
+
   function loadData() {
-    let data = localStorage.getItem(STORAGE_KEY);
-    if(data) {
-      try {
-        let obj = JSON.parse(data);
-        trophies = obj.trophies || 0;
-        lives = obj.lives || 1;
-        multiplier = obj.multiplier || 1;
-        specialBlocksCount = obj.specialBlocksCount || { explosive:0, frozen:0, bomb:0 };
-      } catch {
-        trophies = 0; lives = 1; multiplier = 1; specialBlocksCount = { explosive:0, frozen:0, bomb:0 };
-      }
-    } else {
-      trophies = 0; lives = 1; multiplier = 1; specialBlocksCount = { explosive:0, frozen:0, bomb:0 };
+    lives = parseInt(localStorage.getItem('blokzLives')) || 3;
+    trophies = parseInt(localStorage.getItem('blokzTrophies')) || 0;
+    multiplier = parseInt(localStorage.getItem('blokzMultiplier')) || 1;
+    explosiveCount = parseInt(localStorage.getItem('blokzExplosive')) || 0;
+    frozenCount = parseInt(localStorage.getItem('blokzFrozen')) || 0;
+    bombCount = parseInt(localStorage.getItem('blokzBomb')) || 0;
+  }
+
+  // Sauvegarde et chargements du fond personnalisé
+  function saveBackground(imageDataUrl) {
+    localStorage.setItem('blokzBg', imageDataUrl);
+  }
+
+  function loadBackground() {
+    const bg = localStorage.getItem('blokzBg');
+    if (bg) {
+      document.body.style.backgroundImage = `url(${bg})`;
     }
   }
-  loadData();
 
-  // UTILITAIRES
+  // Mise à jour de l'interface
   function updateUI() {
-    scoreSpan.textContent = score;
     livesSpan.textContent = lives;
     trophiesSpan.textContent = trophies;
     multiplierSpan.textContent = multiplier;
-    trophiesDisplayReady.textContent = `Trophées : ${trophies}`;
-    shopLivesCount.textContent = lives - 1; // vies achetées
-    multiplierCountSpan.textContent = multiplier;
+    explosiveCountSpan.textContent = explosiveCount;
+    frozenCountSpan.textContent = frozenCount;
+    bombCountSpan.textContent = bombCount;
+    checkBuyButtons();
   }
 
-  function randomInt(min,max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  // Activation/désactivation boutons boutique selon trophées
+  function checkBuyButtons() {
+    buyLifeBtn.disabled = trophies < 5;
+    buyMultiplierBtn.disabled = trophies < 10;
+    buyExplosiveBtn.disabled = trophies < 20;
+    buyFrozenBtn.disabled = trophies < 20;
+    buyBombBtn.disabled = trophies < 30;
   }
 
-  function clearBlocks() {
-    blocks.forEach(b => {
-      if(b.el && b.el.parentNode) b.el.parentNode.removeChild(b.el);
-      clearTimeout(b.timeoutId);
-    });
-    blocks = [];
-  }
-
-  // CLASSE BLOCK
-  class Block {
-    constructor(type) {
-      this.type = type; // normal, explosive, frozen, bomb, grey (gris)
-      this.el = document.createElement('div');
-      this.el.classList.add('block');
-      if(type === 'normal') this.el.classList.add('normal');
-      else if(type === 'explosive') this.el.classList.add('explosive');
-      else if(type === 'frozen') this.el.classList.add('frozen');
-      else if(type === 'bomb') this.el.classList.add('bomb');
-      else if(type === 'grey') this.el.style.background = '#444'; // gris foncé
-      this.x = randomInt(10, game.clientWidth - 70);
-      this.y = randomInt(10, game.clientHeight - 70);
-      this.el.style.left = this.x + 'px';
-      this.el.style.top = this.y + 'px';
-      this.clicked = false;
-      this.timeoutId = null;
-      game.appendChild(this.el);
-
-      this.el.addEventListener('click', e => {
-        e.stopPropagation();
-        if(this.clicked) return;
-        this.clicked = true;
-        handleBlockClick(this);
-      });
-
-      this.startDisappearTimer();
-    }
-    startDisappearTimer() {
-      this.timeoutId = setTimeout(() => {
-        if(!this.clicked) {
-          handleBlockMissed(this);
-        }
-        this.remove();
-      }, blockTime);
-    }
-    remove() {
-      clearTimeout(this.timeoutId);
-      if(this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
-      blocks = blocks.filter(b => b !== this);
-    }
-  }
-
-  // GESTION DU JEU
-  function spawnBlock() {
-    if(blocks.length >= maxBlocksOnScreen) return;
-
-    // Decide type of block
-    let typesPool = ['normal','normal','normal','grey'];
-    // Ajouter spéciaux si achetés
-    for(let i=0; i<specialBlocksCount.explosive; i++) typesPool.push('explosive');
-    for(let i=0; i<specialBlocksCount.frozen; i++) typesPool.push('frozen');
-    for(let i=0; i<specialBlocksCount.bomb; i++) typesPool.push('bomb');
-
-    // Adjust probabilities by difficulty and score
-    if(difficulty === 'facile') {
-      blockTime = 5000 - Math.min(score * 100, 3500);
-      maxBlocksOnScreen = 3;
-    } else if(difficulty === 'moyen') {
-      blockTime = 3000 - Math.min(score * 70, 2000);
-      maxBlocksOnScreen = 4;
-    } else if(difficulty === 'impossible') {
-      blockTime = 1500 - Math.min(score * 50, 1000);
-      maxBlocksOnScreen = 5;
-      // Après 10 points, plus de blocs gris
-      if(score >= 10) {
-        typesPool = ['normal','explosive','frozen','bomb'];
-      }
-    }
-
-    // Choix type
-    let type = typesPool[randomInt(0, typesPool.length -1)];
-    blocks.push(new Block(type));
-  }
-
-  function handleBlockClick(block) {
-    if(!gameRunning) return;
-    if(block.type === 'grey') {
-      // Perdu instantané
-      endGame(false, 'Tu as cliqué sur un bloc gris !');
-      return;
-    }
-    // Bloc coloré = score + trophées * multiplicateur
-    score++;
-    let trophiesGained = 1 * multiplier;
-    trophies += trophiesGained;
-    updateUI();
-    saveData();
-
-    // Effet spécial bloc
-    if(block.type === 'explosive') {
-      // Supprime tous les blocs gris à l'écran
-      blocks.filter(b => b.type === 'grey').forEach(gb => {
-        gb.remove();
-      });
-    } else if(block.type === 'frozen') {
-      // Augmente le temps des blocs 2s
-      blockTime += 2000;
-    } else if(block.type === 'bomb') {
-      // Diminue le temps des blocs de 1s
-      blockTime -= 1000;
-      if(blockTime < 500) blockTime = 500;
-    }
-    block.remove();
-  }
-
-  function handleBlockMissed(block) {
-    if(!gameRunning) return;
-    if(block.type !== 'grey') {
-      // Perte d'une vie si bloc coloré non cliqué
-      lives--;
-      updateUI();
-      if(lives <= 0) {
-        endGame(false, "Tu as perdu toutes tes vies !");
-      } else {
-        showMessage("Tu as perdu une vie !");
-      }
-    }
-  }
-
-  function showMessage(msg) {
-    const messageEl = document.getElementById('message');
-    if(!messageEl) {
-      let m = document.createElement('div');
-      m.id = 'message';
-      m.textContent = msg;
-      document.body.insertBefore(m, game.nextSibling);
-    } else {
-      messageEl.textContent = msg;
-      clearTimeout(messageEl._timeoutId);
-      messageEl._timeoutId = setTimeout(() => {
-        messageEl.textContent = '';
-      }, 2000);
-    }
-  }
-
-  function startGame() {
-    menu.style.display = 'none';
-    readyScreen.style.display = 'none';
-    gameOver.style.display = 'none';
-    game.style.display = 'block';
-    info.style.display = 'block';
-    score = 0;
-    updateUI();
-    gameRunning = true;
-    clearBlocks();
-    blockTime = difficulty === 'facile' ? 5000 : difficulty === 'moyen' ? 3000 : 1500;
-    spawnInterval = setInterval(spawnBlock, 700);
-  }
-
-  function endGame(won, reason) {
-    gameRunning = false;
-    clearInterval(spawnInterval);
-    clearBlocks();
-    finalScoreSpan.textContent = score;
-    finalTrophiesSpan.textContent = trophies;
-    game.style.display = 'none';
-    info.style.display = 'none';
-    gameOver.style.display = 'block';
-    reviveBtn.disabled = (lives <= 0);
-    if(reason) alert(reason);
-  }
-
-  // BUTTONS MENU DIFFICULTY
-  [...menu.querySelectorAll('button[data-mode]')].forEach(btn => {
-    btn.addEventListener('click', () => {
-      difficulty = btn.dataset.mode;
-      menu.style.display = 'none';
-      readyScreen.style.display = 'block';
-      updateUI();
-      startPlayingBtn.disabled = false;
-    });
-  });
-
-  // BUTTONS READY SCREEN
-  startPlayingBtn.addEventListener('click', () => {
-    startGame();
-  });
-
-  backToMenuBtn.addEventListener('click', () => {
-    readyScreen.style.display = 'none';
-    menu.style.display = 'block';
-  });
-
-  // GAME OVER BUTTONS
-  restartBtn.addEventListener('click', () => {
-    gameOver.style.display = 'none';
-    menu.style.display = 'block';
-  });
-
-  reviveBtn.addEventListener('click', () => {
-    if(lives > 0) {
-      lives--;
-      updateUI();
-      saveData();
-      gameOver.style.display = 'none';
-      startGame();
-    }
-  });
-
-  // BOUTIQUE ACHATS
+  // Gestion des achats
   buyLifeBtn.addEventListener('click', () => {
-    if(trophies >= 20) {
-      trophies -= 20;
+    if (trophies >= 5) {
+      trophies -= 5;
       lives++;
       updateUI();
       saveData();
-      showMessage("Vie achetée !");
-    } else {
-      showMessage("Pas assez de trophées !");
     }
   });
 
   buyMultiplierBtn.addEventListener('click', () => {
-    if(trophies >= 50) {
-      trophies -= 50;
-      multiplier++;
+    if (trophies >= 10) {
+      trophies -= 10;
+      multiplier *= 2;
       updateUI();
       saveData();
-      showMessage("Multiplicateur acheté !");
-    } else {
-      showMessage("Pas assez de trophées !");
     }
   });
 
   buyExplosiveBtn.addEventListener('click', () => {
-    if(trophies >= 100) {
-      trophies -= 100;
-      specialBlocksCount.explosive++;
+    if (trophies >= 20) {
+      trophies -= 20;
+      explosiveCount++;
       updateUI();
       saveData();
-      showMessage("Bloc explosif acheté !");
-    } else {
-      showMessage("Pas assez de trophées !");
     }
   });
 
   buyFrozenBtn.addEventListener('click', () => {
-    if(trophies >= 100) {
-      trophies -= 100;
-      specialBlocksCount.frozen++;
+    if (trophies >= 20) {
+      trophies -= 20;
+      frozenCount++;
       updateUI();
       saveData();
-      showMessage("Bloc congelé acheté !");
-    } else {
-      showMessage("Pas assez de trophées !");
     }
   });
 
   buyBombBtn.addEventListener('click', () => {
-    if(trophies >= 100) {
-      trophies -= 100;
-      specialBlocksCount.bomb++;
+    if (trophies >= 30) {
+      trophies -= 30;
+      bombCount++;
       updateUI();
       saveData();
-      showMessage("Bloc bombe acheté !");
-    } else {
-      showMessage("Pas assez de trophées !");
     }
   });
 
-  // CHANGEMENT DE FOND D'ÉCRAN
+  // Gestion changement fond personnalisé
   btnChangeBg.addEventListener('click', () => {
-    let url = inputBg.value.trim();
-    if(url) {
-      document.body.style.backgroundImage = `url('${url}')`;
-      inputBg.value = '';
-      showMessage("Fond d'écran changé !");
+    inputBg.click();
+  });
+
+  inputBg.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageDataUrl = event.target.result;
+        document.body.style.backgroundImage = `url(${imageDataUrl})`;
+        saveBackground(imageDataUrl);
+      };
+      reader.readAsDataURL(file);
     }
   });
 
-  // Initialisation UI
+  // Chargement initial des données + fond
+  loadData();
+  loadBackground();
   updateUI();
-})();
-</script>
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #222;
-    color: white;
-    margin: 0; padding: 0;
-    overflow: hidden;
-  }
-  #menu, #readyScreen, #gameOver, #info {
-    padding: 20px;
-    text-align: center;
-  }
-  #game {
-    position: relative;
-    width: 100vw;
-    height: 70vh;
-    background: #333;
-    margin: 0 auto;
-    overflow: hidden;
-    border-radius: 10px;
-  }
-  .block {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.2s ease;
-  }
-  .block.normal {
-    background: #4CAF50;
-  }
-  .block.grey {
-    background: #444;
-  }
-  .block.explosive {
-    background: #FF5722;
-  }
-  .block.frozen {
-    background: #2196F3;
-  }
-  .block.bomb {
-    background: #9C27B0;
-  }
-  .block:hover {
-    transform: scale(1.1);
-  }
-  button {
-    padding: 10px 20px;
-    margin: 5px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  #message {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #0009;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: bold;
-    pointer-events: none;
-    color: yellow;
-  }
-</style>
+  // Ici tu peux ajouter ta logique de jeu, par exemple ajouter des trophées quand le joueur clique sur les bons blocs, perdre des vies, etc.
+</script>
 
 </body>
 </html>
+
 
 
 
