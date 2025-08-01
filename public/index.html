@@ -2,106 +2,40 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Blokz Reflex - Connexion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blokz Reflex - Accueil</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Blokz Reflex</h1>
+  <div class="container">
+    <h1>🧠 Blokz Reflex</h1>
 
-  <div id="auth">
+    <div id="auth-section">
+      <h2>Connexion</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required />
+        <input type="password" id="login-password" placeholder="Mot de passe" required />
+        <button type="submit">Se connecter</button>
+      </form>
 
-    <h2>Inscription</h2>
-    <form id="signup-form">
-      <input type="email" id="signup-email" placeholder="Email" required />
-      <input type="password" id="signup-password" placeholder="Mot de passe" required />
-      <button type="submit">S'inscrire</button>
-    </form>
+      <h2>Créer un compte</h2>
+      <form id="signup-form">
+        <input type="email" id="signup-email" placeholder="Email" required />
+        <input type="password" id="signup-password" placeholder="Mot de passe" required />
+        <button type="submit">S'inscrire</button>
+      </form>
+    </div>
 
-    <h2>Connexion</h2>
-    <form id="login-form">
-      <input type="email" id="login-email" placeholder="Email" required />
-      <input type="password" id="login-password" placeholder="Mot de passe" required />
-      <button type="submit">Se connecter</button>
-    </form>
-
+    <div id="play-section" style="display:none;">
+      <h2>Bienvenue 👋</h2>
+      <p>Tu es connecté !</p>
+      <button onclick="window.location.href='game.html'">🎮 Jouer</button>
+    </div>
   </div>
 
-  <div id="welcome" style="display:none;">
-    <h2>Bienvenue <span id="user-email"></span></h2>
-    <button id="play-btn">Jouer à Blokz Reflex</button>
-    <button id="logout-btn">Se déconnecter</button>
-  </div>
-
-  <script>
-    const apiUrl = 'http://localhost:3000'; // Mets ici l'URL de ton backend
-
-    const signupForm = document.getElementById('signup-form');
-    const loginForm = document.getElementById('login-form');
-    const authDiv = document.getElementById('auth');
-    const welcomeDiv = document.getElementById('welcome');
-    const userEmailSpan = document.getElementById('user-email');
-    const logoutBtn = document.getElementById('logout-btn');
-    const playBtn = document.getElementById('play-btn');
-
-    signupForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      const res = await fetch(apiUrl + '/signup', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      alert(data.message);
-    });
-
-    loginForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      const res = await fetch(apiUrl + '/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('email', email);
-        showWelcome(email);
-      } else {
-        alert(data.message || 'Erreur de connexion');
-      }
-    });
-
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('email');
-      authDiv.style.display = 'block';
-      welcomeDiv.style.display = 'none';
-    });
-
-    playBtn.addEventListener('click', () => {
-      alert('Ici tu peux lancer ton jeu Blokz Reflex !');
-      // Redirection ou affichage du jeu à ajouter ici
-    });
-
-    function showWelcome(email) {
-      userEmailSpan.textContent = email;
-      authDiv.style.display = 'none';
-      welcomeDiv.style.display = 'block';
-    }
-
-    window.onload = () => {
-      const token = localStorage.getItem('token');
-      const email = localStorage.getItem('email');
-      if (token && email) {
-        showWelcome(email);
-      }
-    };
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
+
 
 
