@@ -4,37 +4,13 @@
   <meta charset="UTF-8" />
   <title>Blokz Reflex</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: linear-gradient(to bottom right, #1f1f1f, #000); color: white; overflow: hidden; }
 
-    body {
-      background: linear-gradient(to bottom right, #1f1f1f, #000);
-      color: white;
-      overflow: hidden;
-    }
+    .page { display: none; padding: 2rem; text-align: center; height: 100vh; }
+    .active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
-    .page {
-      display: none;
-      padding: 2rem;
-      text-align: center;
-      height: 100vh;
-    }
-
-    .active {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    h1 {
-      font-size: 3rem;
-      color: #00ffc8;
-    }
+    h1 { font-size: 3rem; color: #00ffc8; }
 
     .btn {
       margin: 1rem;
@@ -46,9 +22,7 @@
       cursor: pointer;
     }
 
-    .btn:hover {
-      background: #00ccaa;
-    }
+    .btn:hover { background: #00ccaa; }
 
     #gameArea {
       width: 100%;
@@ -82,6 +56,8 @@
       width: 90%;
       margin: 1rem auto;
       font-size: 1.2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
     .topbar {
@@ -108,9 +84,7 @@
       border: 1px solid #444;
     }
 
-    .store-item h3 {
-      margin-bottom: 0.5rem;
-    }
+    .store-item h3 { margin-bottom: 0.5rem; }
 
     .store-item button {
       background: #00ffc8;
@@ -118,6 +92,12 @@
       padding: 0.5rem 1rem;
       border-radius: 8px;
       cursor: pointer;
+    }
+
+    #countdown {
+      font-size: 5rem;
+      font-weight: bold;
+      margin-top: 2rem;
     }
   </style>
 </head>
@@ -137,7 +117,7 @@
     </div>
   </div>
 
-  <!-- ÉCRAN "PRÊT ?" -->
+  <!-- ÉCRAN PRÊT -->
   <div id="ready" class="page">
     <h1>Tu es prêt ?</h1>
     <p>Le jeu commence dès que tu appuies sur <strong>Commencer</strong>.</p>
@@ -151,7 +131,9 @@
       <div>❤️ Vies : <span id="lives"></span></div>
       <div>🏆 Trophées : <span id="trophies"></span></div>
       <div>🔥 Multiplicateur : x<span id="multiplier"></span></div>
+      <div>📈 Score : <span id="score"></span></div>
     </div>
+    <div id="countdown"></div>
     <div id="gameArea"></div>
     <div class="topbar">
       <button class="link-btn" onclick="endGame()">🏠 Quitter</button>
@@ -189,6 +171,7 @@
     let trophies = parseInt(localStorage.getItem("trophies") || "0");
     let lives = parseInt(localStorage.getItem("lives") || "3");
     let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
+    let score = 0;
 
     function showPage(id) {
       pages.forEach(p => document.getElementById(p).classList.remove("active"));
@@ -206,6 +189,7 @@
       document.getElementById("lives").textContent = lives;
       document.getElementById("trophies").textContent = trophies;
       document.getElementById("multiplier").textContent = multiplier;
+      document.getElementById("score").textContent = score;
     }
 
     function spawnBlock(speed) {
@@ -220,6 +204,7 @@
       block.onclick = () => {
         if (isGray) return endGame("Tu as cliqué un bloc gris !");
         trophies += multiplier;
+        score++;
         saveState();
         updateUI();
         clearTimeout(gameTimer);
@@ -240,9 +225,22 @@
     }
 
     function startGame() {
-      updateUI();
       showPage('game');
-      spawnBlock(difficulties[selectedDifficulty]);
+      score = 0;
+      updateUI();
+      let countdown = 3;
+      const countdownEl = document.getElementById("countdown");
+      countdownEl.textContent = countdown;
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown === 0) {
+          clearInterval(countdownInterval);
+          countdownEl.textContent = "";
+          spawnBlock(difficulties[selectedDifficulty]);
+        } else {
+          countdownEl.textContent = countdown;
+        }
+      }, 1000);
     }
 
     function endGame(msg) {
@@ -278,6 +276,7 @@
         lives++;
         saveState();
         alert("❤️ +1 vie !");
+        updateUI();
       } else alert("Pas assez de trophées !");
     }
 
@@ -290,6 +289,7 @@
         saveState();
         alert("🔥 Multiplicateur augmenté !");
         updateShop();
+        updateUI();
       } else alert("Pas assez de trophées !");
     }
 
@@ -297,6 +297,7 @@
   </script>
 </body>
 </html>
+
 
 
 
