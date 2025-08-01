@@ -1,235 +1,303 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blokz Reflex - Pro avec compteur en jeu</title>
-<style>
-  body, html {
-    margin: 0; padding: 0; height: 100%;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: white;
-    overflow: hidden;
-  }
-  #fondJeu {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-size: cover;
-    background-position: center;
-    filter: brightness(0.5);
-    z-index: -1;
-  }
-  #interface {
-    position: relative;
-    max-width: 480px;
-    margin: 30px auto;
-    background: rgba(20,20,20,0.9);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px #0af;
-  }
-  #instructions {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-  }
-  #compteurPoints {
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  button {
-    font-size: 1.2em;
-    padding: 10px 20px;
-    margin: 10px 5px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #0af;
-    color: white;
-    transition: background 0.3s ease;
-  }
-  button:hover {
-    background: #08c;
-  }
-  #btnCommencer {
-    display: none;
-  }
-  #changerFondBtn {
-    position: fixed;
-    bottom: 15px;
-    left: 15px;
-    background: #444;
-    font-size: 1em;
-    padding: 8px 15px;
-    box-shadow: 0 0 10px #0af;
-  }
-  /* Compteur en jeu en haut à droite */
-  #compteurJeu {
-    position: fixed;
-    top: 10px;
-    right: 15px;
-    font-size: 1.6em;
-    color: #0af;
-    font-weight: bold;
-    z-index: 20;
-    text-shadow: 0 0 8px #0af;
-  }
-  /* Bloc simulé à cliquer pour test */
-  #blocTest {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 100px;
-    height: 100px;
-    background: #0af;
-    border-radius: 15px;
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 15px #08c;
-    z-index: 15;
-    display: none; /* caché avant le jeu */
-    user-select: none;
-  }
-  #blocTest:hover {
-    background: #08c;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Blokz Reflex</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #1f1f1f, #000);
+      color: white;
+      overflow: hidden;
+    }
+
+    .page {
+      display: none;
+      padding: 2rem;
+      text-align: center;
+      height: 100vh;
+    }
+
+    .active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #00ffc8;
+    }
+
+    .btn {
+      margin: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      background: #00ffc8;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #00ccaa;
+    }
+
+    #gameArea {
+      width: 100%;
+      max-width: 800px;
+      height: 80vh;
+      border: 2px solid #00ffc8;
+      margin: auto;
+      position: relative;
+      background: #111;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .block {
+      width: 60px;
+      height: 60px;
+      position: absolute;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .gray { background: gray; }
+    .red { background: #ff4d4d; }
+    .blue { background: #4d94ff; }
+    .green { background: #4dff88; }
+    .yellow { background: #ffff4d; }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      width: 90%;
+      margin: 1rem auto;
+      font-size: 1.2rem;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+
+    .link-btn {
+      margin-left: 1rem;
+      background: transparent;
+      border: 1px solid #00ffc8;
+      color: #00ffc8;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .store-item {
+      background: #222;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: 10px;
+      border: 1px solid #444;
+    }
+
+    .store-item h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    .store-item button {
+      background: #00ffc8;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-
-<div id="fondJeu"></div>
-
-<div id="interface">
-  <div id="instructions">
-    <h2>Blokz Reflex - Instructions</h2>
-    <ul>
-      <li>Clique sur "Prêt ?" pour lancer le compte à rebours.</li>
-      <li>Après le compte à rebours, clique sur "Commencer" pour démarrer la partie.</li>
-      <li>Essaie de cliquer sur les bons blocs avant qu'ils disparaissent !</li>
-      <li>Change le fond d'écran gratuit avec le bouton en bas à gauche.</li>
-    </ul>
+  <!-- ACCUEIL -->
+  <div id="home" class="page active">
+    <h1>Blokz Reflex</h1>
+    <p>🎯 Clique sur les blocs colorés pour gagner des 🏆.</p>
+    <p>❌ Évite les blocs gris. Rater un bloc coloré = -1 ❤️</p>
+    <p>💾 Trophées et améliorations sont sauvegardés automatiquement.</p>
+    <button class="btn" onclick="chooseDifficulty('easy')">Facile</button>
+    <button class="btn" onclick="chooseDifficulty('medium')">Moyen</button>
+    <button class="btn" onclick="chooseDifficulty('impossible')">Impossible</button>
+    <div class="topbar">
+      <button class="link-btn" onclick="showPage('shop')">🏪 Boutique</button>
+      <button class="link-btn" onclick="showPage('profile')">👤 Profil</button>
+    </div>
   </div>
 
-  <div id="compteurPoints">🏆 Trophées : 0</div>
-
-  <div style="text-align: center;">
-    <button id="btnPret">Prêt ?</button>
-    <button id="btnCommencer">Commencer</button>
+  <!-- ÉCRAN "PRÊT ?" -->
+  <div id="ready" class="page">
+    <h1>Tu es prêt ?</h1>
+    <p>Le jeu commence dès que tu appuies sur <strong>Commencer</strong>.</p>
+    <button class="btn" onclick="startGame()">Commencer</button>
+    <button class="btn" onclick="showPage('home')">Retour</button>
   </div>
-</div>
 
-<button id="changerFondBtn">Changer fond perso gratuit</button>
+  <!-- JEU -->
+  <div id="game" class="page">
+    <div class="hud">
+      <div>❤️ Vies : <span id="lives"></span></div>
+      <div>🏆 Trophées : <span id="trophies"></span></div>
+      <div>🔥 Multiplicateur : x<span id="multiplier"></span></div>
+    </div>
+    <div id="gameArea"></div>
+    <div class="topbar">
+      <button class="link-btn" onclick="endGame()">🏠 Quitter</button>
+    </div>
+  </div>
 
-<!-- Compteur en jeu -->
-<div id="compteurJeu">Score : 0</div>
+  <!-- BOUTIQUE -->
+  <div id="shop" class="page">
+    <h1>Boutique 🛒</h1>
+    <div class="store-item">
+      <h3>❤️ Vie Supplémentaire — 50 🏆</h3>
+      <button onclick="buyLife()">Acheter</button>
+    </div>
+    <div class="store-item">
+      <h3>🔥 Multiplicateur x<span id="shopMultiplier"></span> → x<span id="nextMultiplier"></span> — <span id="multiplierCost"></span> 🏆</h3>
+      <button onclick="upgradeMultiplier()">Améliorer</button>
+    </div>
+    <button class="btn" onclick="showPage('home')">Retour</button>
+  </div>
 
-<!-- Bloc simulé (à cliquer pour tester l'ajout de points) -->
-<div id="blocTest" title="Clique moi !"></div>
+  <!-- PROFIL -->
+  <div id="profile" class="page">
+    <h1>Profil 👤</h1>
+    <p>🏆 Trophées : <span id="profileTrophies"></span></p>
+    <p>❤️ Vies : <span id="profileLives"></span></p>
+    <p>🔥 Multiplicateur : x<span id="profileMultiplier"></span></p>
+    <button class="btn" onclick="showPage('home')">Retour</button>
+  </div>
 
-<script>
-  // Variables
-  let points = 0;
-  let jeuEnCours = false;
-  let tempsBloc = 3000; // facile = 3s par défaut
+  <script>
+    const pages = ["home", "ready", "game", "shop", "profile"];
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const difficulties = { easy: 3000, medium: 1500, impossible: 800 };
+    let gameTimer, currentBlock, selectedDifficulty = "easy";
+    let trophies = parseInt(localStorage.getItem("trophies") || "0");
+    let lives = parseInt(localStorage.getItem("lives") || "3");
+    let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
 
-  // Fonds perso gratuits (URLs images)
-  const fondsPersoGratuits = [
-    'url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1350&q=80")',
-    'url("https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1350&q=80")',
-    'url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1350&q=80")'
-  ];
-  let fondActuelIndex = 0;
-
-  // Éléments DOM
-  const compteurPoints = document.getElementById('compteurPoints');
-  const btnPret = document.getElementById('btnPret');
-  const btnCommencer = document.getElementById('btnCommencer');
-  const fondJeu = document.getElementById('fondJeu');
-  const changerFondBtn = document.getElementById('changerFondBtn');
-  const compteurJeu = document.getElementById('compteurJeu');
-  const blocTest = document.getElementById('blocTest');
-
-  // Mise à jour des points (interface boutique / avant jeu)
-  function majPoints() {
-    compteurPoints.textContent = `🏆 Trophées : ${points}`;
-  }
-
-  // Mise à jour compteur en jeu (visible pendant la partie)
-  function majCompteurJeu() {
-    compteurJeu.textContent = `Score : ${points}`;
-  }
-
-  // Appliquer fond perso
-  function appliquerFond(index) {
-    fondJeu.style.backgroundImage = fondsPersoGratuits[index];
-    fondActuelIndex = index;
-  }
-
-  // Changer fond
-  function changerFondSuivant() {
-    fondActuelIndex = (fondActuelIndex + 1) % fondsPersoGratuits.length;
-    appliquerFond(fondActuelIndex);
-  }
-
-  // Compte à rebours 3-2-1 (affichage sur bouton Commencer)
-  async function compteRebours() {
-    btnPret.style.display = 'none';
-    btnCommencer.style.display = 'inline-block';
-
-    for(let i = 3; i > 0; i--) {
-      btnCommencer.textContent = `Commencer dans ${i}...`;
-      await new Promise(r => setTimeout(r, 1000));
+    function showPage(id) {
+      pages.forEach(p => document.getElementById(p).classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      if (id === 'profile') updateProfile();
+      if (id === 'shop') updateShop();
     }
-    btnCommencer.textContent = 'Commencer !';
-  }
 
-  // Fonction appelée quand on clique sur un bloc valide (exemple)
-  function ajouterPoint() {
-    if(!jeuEnCours) return;
-    points++;
-    majPoints();
-    majCompteurJeu();
-  }
+    function chooseDifficulty(diff) {
+      selectedDifficulty = diff;
+      showPage('ready');
+    }
 
-  // Démarrer jeu
-  function demarrerJeu() {
-    jeuEnCours = true;
-    points = 0;
-    majPoints();
-    majCompteurJeu();
-    btnCommencer.style.display = 'none';
-    // Affiche blocTest (simule un bloc à cliquer)
-    blocTest.style.display = 'block';
-  }
+    function updateUI() {
+      document.getElementById("lives").textContent = lives;
+      document.getElementById("trophies").textContent = trophies;
+      document.getElementById("multiplier").textContent = multiplier;
+    }
 
-  // Événements
-  btnPret.addEventListener('click', compteRebours);
-  btnCommencer.addEventListener('click', demarrerJeu);
-  changerFondBtn.addEventListener('click', changerFondSuivant);
+    function spawnBlock(speed) {
+      const gameArea = document.getElementById("gameArea");
+      gameArea.innerHTML = "";
+      const block = document.createElement("div");
+      const isGray = Math.random() < 0.2;
+      block.className = "block " + (isGray ? "gray" : colors[Math.floor(Math.random() * colors.length)]);
+      block.style.top = Math.random() * (gameArea.clientHeight - 60) + "px";
+      block.style.left = Math.random() * (gameArea.clientWidth - 60) + "px";
 
-  // Clique sur bloc test => ajoute un point
-  blocTest.addEventListener('click', () => {
-    ajouterPoint();
-  });
+      block.onclick = () => {
+        if (isGray) return endGame("Tu as cliqué un bloc gris !");
+        trophies += multiplier;
+        saveState();
+        updateUI();
+        clearTimeout(gameTimer);
+        spawnBlock(speed);
+      };
 
-  // Initialisation
-  window.addEventListener('load', () => {
-    majPoints();
-    appliquerFond(fondActuelIndex);
-    compteurJeu.style.display = 'none'; // caché au départ
-  });
+      gameArea.appendChild(block);
+      currentBlock = block;
 
-  // Affiche le compteur en jeu au démarrage de la partie
-  btnCommencer.addEventListener('click', () => {
-    compteurJeu.style.display = 'block';
-  });
+      gameTimer = setTimeout(() => {
+        if (!isGray) {
+          lives--;
+          if (lives <= 0) return endGame("Tu as perdu toutes tes vies !");
+        }
+        updateUI();
+        spawnBlock(speed);
+      }, speed);
+    }
 
-</script>
+    function startGame() {
+      updateUI();
+      showPage('game');
+      spawnBlock(difficulties[selectedDifficulty]);
+    }
 
+    function endGame(msg) {
+      if (msg) alert("Game Over : " + msg);
+      clearTimeout(gameTimer);
+      saveState();
+      showPage('home');
+    }
+
+    function saveState() {
+      localStorage.setItem("trophies", trophies);
+      localStorage.setItem("lives", lives);
+      localStorage.setItem("multiplier", multiplier);
+    }
+
+    function updateProfile() {
+      document.getElementById("profileTrophies").textContent = trophies;
+      document.getElementById("profileLives").textContent = lives;
+      document.getElementById("profileMultiplier").textContent = multiplier;
+    }
+
+    function updateShop() {
+      const nextMult = multiplier + 1;
+      const cost = nextMult * nextMult * 50;
+      document.getElementById("shopMultiplier").textContent = multiplier;
+      document.getElementById("nextMultiplier").textContent = nextMult;
+      document.getElementById("multiplierCost").textContent = cost;
+    }
+
+    function buyLife() {
+      if (trophies >= 50) {
+        trophies -= 50;
+        lives++;
+        saveState();
+        alert("❤️ +1 vie !");
+      } else alert("Pas assez de trophées !");
+    }
+
+    function upgradeMultiplier() {
+      const nextMult = multiplier + 1;
+      const cost = nextMult * nextMult * 50;
+      if (trophies >= cost) {
+        trophies -= cost;
+        multiplier = nextMult;
+        saveState();
+        alert("🔥 Multiplicateur augmenté !");
+        updateShop();
+      } else alert("Pas assez de trophées !");
+    }
+
+    updateUI();
+  </script>
 </body>
 </html>
+
 
 
 
