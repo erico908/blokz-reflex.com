@@ -25,9 +25,9 @@
     .btn:hover { background: #00ccaa; }
 
     #gameArea {
-      width: 90vw;
+      width: 100%;
       max-width: 800px;
-      height: 70vh;
+      height: 80vh;
       border: 2px solid #00ffc8;
       margin: auto;
       position: relative;
@@ -42,7 +42,6 @@
       position: absolute;
       border-radius: 10px;
       cursor: pointer;
-      user-select: none;
     }
 
     .gray { background: gray; }
@@ -77,12 +76,28 @@
       cursor: pointer;
     }
 
+    .store-item {
+      background: #222;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: 10px;
+      border: 1px solid #444;
+    }
+
+    .store-item h3 { margin-bottom: 0.5rem; }
+
+    .store-item button {
+      background: #00ffc8;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     #countdown {
       font-size: 5rem;
       font-weight: bold;
       margin-top: 2rem;
-      height: 6rem;
-      line-height: 6rem;
     }
   </style>
 </head>
@@ -122,7 +137,7 @@
     <div id="countdown"></div>
     <div id="gameArea"></div>
     <div class="topbar">
-      <button class="link-btn" onclick="endGame('Tu as quitté la partie')">🏠 Quitter</button>
+      <button class="link-btn" onclick="endGame()">🏠 Quitter</button>
     </div>
   </div>
 
@@ -156,150 +171,133 @@
     <button class="btn" onclick="showPage('home')">Retour</button>
   </div>
 
-<script>
-  const pages = ["home", "ready", "game", "shop", "profile", "localGame"];
-  const colors = ['red', 'blue', 'green', 'yellow'];
-  const difficulties = { easy: 3000, medium: 1500, impossible: 800 };
-  let gameTimer = null;
-  let selectedDifficulty = "easy";
-  let trophies = parseInt(localStorage.getItem("trophies") || "0");
-  let lives = parseInt(localStorage.getItem("lives") || "3");
-  let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
-  let score = 0;
+  <script>
+    const pages = ["home", "ready", "game", "shop", "profile", "localGame"];
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const difficulties = { easy: 3000, medium: 1500, impossible: 800 };
+    let gameTimer, currentBlock, selectedDifficulty = "easy";
+    let trophies = parseInt(localStorage.getItem("trophies") || "0");
+    let lives = parseInt(localStorage.getItem("lives") || "3");
+    let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
+    let score = 0;
 
-  function showPage(id) {
-    pages.forEach(p => {
-      document.getElementById(p).classList.remove("active");
-    });
-    document.getElementById(id).classList.add("active");
-    if (id === 'profile') updateProfile();
-    if (id === 'shop') updateShop();
-    if (id === 'game') updateUI();
-  }
+    function showPage(id) {
+      pages.forEach(p => document.getElementById(p).classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      if (id === 'profile') updateProfile();
+      if (id === 'shop') updateShop();
+    }
 
-  function chooseDifficulty(diff) {
-    selectedDifficulty = diff;
-    showPage('ready');
-  }
+    function chooseDifficulty(diff) {
+      selectedDifficulty = diff;
+      showPage('ready');
+    }
 
-  function updateUI() {
-    document.getElementById("lives").textContent = lives;
-    document.getElementById("trophies").textContent = trophies;
-    document.getElementById("multiplier").textContent = multiplier;
-    document.getElementById("score").textContent = score;
-  }
+    function updateUI() {
+      document.getElementById("lives").textContent = lives;
+      document.getElementById("trophies").textContent = trophies;
+      document.getElementById("multiplier").textContent = multiplier;
+      document.getElementById("score").textContent = score;
+    }
 
-  // Fonction pour générer une position aléatoire dans le gameArea
-  function randomPosition() {
-    const gameArea = document.getElementById("gameArea");
-    const maxWidth = gameArea.clientWidth - 60;  // taille du bloc
-    const maxHeight = gameArea.clientHeight - 60;
-    const x = Math.floor(Math.random() * maxWidth);
-    const y = Math.floor(Math.random() * maxHeight);
-    return { x, y };
-  }
+    function spawnBlock(speed) {
+      const gameArea = document.getElementById("gameArea");
+      gameArea.innerHTML = "";
+      const block = document.createElement("div");
+      const isGray = Math.random() < 0.2;
+      block.className = "block " + (isGray ? "gray" : colors[Math.floor(Math.random() * colors.length)]);
+      block.style.top = Math.random() * (gameArea.clientHeight - 60) + "px";
+      block.style.left = Math.random() * (gameArea.clientWidth - 60) + "px";
 
-  function spawnBlock(speed) {
-    const gameArea = document.getElementById("gameArea");
-    gameArea.innerHTML = ""; // supprime l'ancien bloc
-
-    const block = document.createElement("div");
-    const isGray = Math.random() < 0.2;
-    block.className = "block " + (isGray ? "gray" : colors[Math.floor(Math.random() * colors.length)]);
-
-    const pos = randomPosition();
-    block.style.left = pos.x + "px";
-    block.style.top = pos.y + "px";
-
-    block.onclick = () => {
-      if (isGray) return endGame("Tu as cliqué sur un bloc gris, partie terminée !");
-      score += multiplier;
-      trophies++;
-      updateUI();
-      clearTimeout(gameTimer);
-      gameTimer = setTimeout(() => spawnBlock(speed), speed);
-    };
-
-    gameArea.appendChild(block);
-
-    // Timer pour la disparition du bloc
-    gameTimer = setTimeout(() => {
-      // Si bloc toujours là (pas cliqué)
-      if (!block.parentNode) return;
-      if (!isGray) {
-        lives--;
+      block.onclick = () => {
+        if (isGray) return endGame("Tu as cliqué sur un bloc gris, partie terminée !");
+        score += multiplier;
+        trophies++;
         updateUI();
-        if (lives <= 0) return endGame("Tu as perdu toutes tes vies !");
-      }
-      spawnBlock(speed);
-    }, speed);
-  }
+        clearTimeout(gameTimer);
+        gameTimer = setTimeout(() => spawnBlock(speed), speed);
+      };
 
-  function startGame() {
-    score = 0;
-    updateUI();
-    showPage('game');
-    let count = 3;
-    const countdown = document.getElementById("countdown");
-    countdown.textContent = count;
-    const interval = setInterval(() => {
-      count--;
-      if (count > 0) countdown.textContent = count;
-      else {
-        clearInterval(interval);
-        countdown.textContent = "";
-        spawnBlock(difficulties[selectedDifficulty]);
-      }
-    }, 1000);
-  }
+      gameArea.appendChild(block);
 
-  function endGame(message) {
-    alert(message + `\nScore final : ${score}\nTrophées gagnés : ${trophies}`);
-    localStorage.setItem("trophies", trophies);
-    localStorage.setItem("lives", lives);
-    localStorage.setItem("multiplier", multiplier);
-    showPage('home');
-  }
-
-  function updateProfile() {
-    document.getElementById("profileTrophies").textContent = trophies;
-    document.getElementById("profileLives").textContent = lives;
-    document.getElementById("profileMultiplier").textContent = multiplier;
-  }
-
-  function updateShop() {
-    document.getElementById("shopMultiplier").textContent = multiplier;
-    document.getElementById("nextMultiplier").textContent = multiplier + 1;
-    document.getElementById("multiplierCost").textContent = multiplier * 100;
-  }
-
-  function buyLife() {
-    if (trophies >= 50) {
-      trophies -= 50;
-      lives++;
-      updateUI();
-      updateShop();
-      alert("Vie achetée !");
-    } else {
-      alert("Pas assez de trophées !");
+      gameTimer = setTimeout(() => {
+        if (!block.parentNode) return; // déjà cliqué
+        if (!isGray) {
+          lives--;
+          updateUI();
+          if (lives <= 0) return endGame("Tu as perdu toutes tes vies !");
+        }
+        spawnBlock(speed);
+      }, speed);
     }
-  }
 
-  function upgradeMultiplier() {
-    const cost = multiplier * 100;
-    if (trophies >= cost) {
-      trophies -= cost;
-      multiplier++;
+    function startGame() {
+      score = 0;
       updateUI();
-      updateShop();
-      alert("Multiplicateur amélioré !");
-    } else {
-      alert("Pas assez de trophées !");
+      showPage('game');
+      let count = 3;
+      const countdown = document.getElementById("countdown");
+      countdown.textContent = count;
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) countdown.textContent = count;
+        else {
+          clearInterval(interval);
+          countdown.textContent = "";
+          spawnBlock(difficulties[selectedDifficulty]);
+        }
+      }, 1000);
     }
-  }
-</script>
+
+    function endGame(message) {
+      alert(message + `\nScore final : ${score}\nTrophées gagnés : ${trophies}`);
+      // Sauvegarde les trophées, vies et multiplicateur
+      localStorage.setItem("trophies", trophies);
+      localStorage.setItem("lives", lives);
+      localStorage.setItem("multiplier", multiplier);
+      showPage('home');
+    }
+
+    function updateProfile() {
+      document.getElementById("profileTrophies").textContent = trophies;
+      document.getElementById("profileLives").textContent = lives;
+      document.getElementById("profileMultiplier").textContent = multiplier;
+    }
+
+    function updateShop() {
+      document.getElementById("shopMultiplier").textContent = multiplier;
+      document.getElementById("nextMultiplier").textContent = multiplier + 1;
+      document.getElementById("multiplierCost").textContent = multiplier * 100;
+    }
+
+    function buyLife() {
+      if (trophies >= 50) {
+        trophies -= 50;
+        lives++;
+        updateUI();
+        updateShop();
+        alert("Vie achetée !");
+      } else {
+        alert("Pas assez de trophées !");
+      }
+    }
+
+    function upgradeMultiplier() {
+      const cost = multiplier * 100;
+      if (trophies >= cost) {
+        trophies -= cost;
+        multiplier++;
+        updateUI();
+        updateShop();
+        alert("Multiplicateur amélioré !");
+      } else {
+        alert("Pas assez de trophées !");
+      }
+    }
+  </script>
 </body>
 </html>
+
 
 
 
