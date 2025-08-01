@@ -2,46 +2,59 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Blokz Reflex</title>
+  <title>Blokz Reflex - Local Multiplayer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { background: linear-gradient(to bottom right, #1f1f1f, #000); color: white; overflow: hidden; }
-
-    .page { display: none; padding: 2rem; text-align: center; height: 100vh; }
-    .active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-
-    h1 { font-size: 3rem; color: #00ffc8; }
-
-    .btn {
-      margin: 1rem;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      background: #00ffc8;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
+    
+    #localGame {
+      display: flex;
+      height: 90vh;
+      width: 100vw;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 10px;
     }
 
-    .btn:hover { background: #00ccaa; }
-
-    #gameArea {
-      width: 100%;
-      max-width: 800px;
-      height: 80vh;
+    #player1Area, #player2Area {
+      flex: 1;
       border: 2px solid #00ffc8;
-      margin: auto;
+      border-radius: 15px;
       position: relative;
-      background: #111;
-      border-radius: 20px;
       overflow: hidden;
+      height: 80vh;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111;
+    }
+
+    #player1Area {
+      border-right: 4px solid #00ffc8;
+    }
+
+    #player2Area {
+      border-left: 4px solid #00ffc8;
+    }
+
+    #gameArea1, #gameArea2 {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      background: #222;
+      border-radius: 12px;
+      margin: 15px 0;
     }
 
     .block {
-      width: 60px;
-      height: 60px;
       position: absolute;
       border-radius: 10px;
       cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
     }
 
     .gray { background: gray; }
@@ -50,287 +63,203 @@
     .green { background: #4dff88; }
     .yellow { background: #ffff4d; }
 
-    .hud {
-      display: flex;
-      justify-content: space-between;
-      width: 90%;
-      margin: 1rem auto;
-      font-size: 1.2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .topbar {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-    }
-
-    .link-btn {
-      margin-left: 1rem;
-      background: transparent;
-      border: 1px solid #00ffc8;
+    h2 {
       color: #00ffc8;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
+      margin-top: 15px;
+      user-select: none;
     }
 
-    .store-item {
-      background: #222;
-      padding: 1rem;
-      margin: 1rem;
-      border-radius: 10px;
-      border: 1px solid #444;
-    }
-
-    .store-item h3 { margin-bottom: 0.5rem; }
-
-    .store-item button {
+    #quitBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
       background: #00ffc8;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 1.1rem;
       cursor: pointer;
+      user-select: none;
+      z-index: 10;
+    }
+    #quitBtn:hover {
+      background: #00ccaa;
     }
 
-    #countdown {
-      font-size: 5rem;
-      font-weight: bold;
-      margin-top: 2rem;
+    /* Responsive mobile patch */
+    @media (max-width: 600px) {
+      #localGame {
+        flex-direction: column;
+        height: auto;
+        padding: 10px 5px;
+      }
+      #player1Area, #player2Area {
+        flex: none;
+        height: 45vh;
+        max-width: none;
+        border-right: none !important;
+        border-bottom: 2px solid #00ffc8;
+      }
+      #player2Area {
+        border-bottom: none;
+      }
+      #gameArea1, #gameArea2 {
+        margin: 10px;
+      }
+      .block {
+        width: 70px !important;
+        height: 70px !important;
+      }
+      #quitBtn {
+        top: auto;
+        bottom: 10px;
+        right: 10px;
+      }
+      #quitBtn {
+        font-size: 1.4rem;
+        padding: 15px 25px;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- ACCUEIL -->
-  <div id="home" class="page active">
-    <h1>Blokz Reflex</h1>
-    <p>🎯 Clique sur les blocs colorés pour gagner des 🏆.</p>
-    <p>❌ Évite les blocs gris. Rater un bloc coloré = -1 ❤️</p>
-    <p>💾 Trophées et améliorations sont sauvegardés automatiquement.</p>
-    <button class="btn" onclick="chooseDifficulty('easy')">Facile</button>
-    <button class="btn" onclick="chooseDifficulty('medium')">Moyen</button>
-    <button class="btn" onclick="chooseDifficulty('impossible')">Impossible</button>
-    <button class="btn" onclick="goToLocal()">Local</button>
-    <div class="topbar">
-      <button class="link-btn" onclick="showPage('shop')">🏪 Boutique</button>
-      <button class="link-btn" onclick="showPage('profile')">👤 Profil</button>
+  <div id="localGame">
+    <div id="player1Area">
+      <h2>Joueur 1</h2>
+      <div id="gameArea1"></div>
     </div>
-  </div>
-
-  <!-- ÉCRAN PRÊT -->
-  <div id="ready" class="page">
-    <h1>Tu es prêt ?</h1>
-    <p>Le jeu commence dès que tu appuies sur <strong>Commencer</strong>.</p>
-    <button class="btn" onclick="startGame()">Commencer</button>
-    <button class="btn" onclick="showPage('home')">Retour</button>
-  </div>
-
-  <!-- JEU -->
-  <div id="game" class="page">
-    <div class="hud">
-      <div>❤️ Vies : <span id="lives"></span></div>
-      <div>🏆 Trophées : <span id="trophies"></span></div>
-      <div>🔥 Multiplicateur : x<span id="multiplier"></span></div>
-      <div>📈 Score : <span id="score"></span></div>
+    <div id="player2Area">
+      <h2>Joueur 2</h2>
+      <div id="gameArea2"></div>
     </div>
-    <div id="countdown"></div>
-    <div id="gameArea"></div>
-    <div class="topbar">
-      <button class="link-btn" onclick="endGame()">🏠 Quitter</button>
-    </div>
-  </div>
-
-  <!-- BOUTIQUE -->
-  <div id="shop" class="page">
-    <h1>Boutique 🛒</h1>
-    <div class="store-item">
-      <h3>❤️ Vie Supplémentaire — 50 🏆</h3>
-      <button onclick="buyLife()">Acheter</button>
-    </div>
-    <div class="store-item">
-      <h3>🔥 Multiplicateur x<span id="shopMultiplier"></span> → x<span id="nextMultiplier"></span> — <span id="multiplierCost"></span> 🏆</h3>
-      <button onclick="upgradeMultiplier()">Améliorer</button>
-    </div>
-    <button class="btn" onclick="showPage('home')">Retour</button>
-  </div>
-
-  <!-- PROFIL -->
-  <div id="profile" class="page">
-    <h1>Profil 👤</h1>
-    <p>🏆 Trophées : <span id="profileTrophies"></span></p>
-    <p>❤️ Vies : <span id="profileLives"></span></p>
-    <p>🔥 Multiplicateur : x<span id="profileMultiplier"></span></p>
-    <button class="btn" onclick="showPage('home')">Retour</button>
+    <button id="quitBtn">Quitter</button>
   </div>
 
   <script>
-    const pages = ["home", "ready", "game", "shop", "profile"];
     const colors = ['red', 'blue', 'green', 'yellow'];
-    const difficulties = { easy: 3000, medium: 1500, impossible: 800 };
-    let gameTimer, currentBlock, selectedDifficulty = "easy";
-    let trophies = parseInt(localStorage.getItem("trophies") || "0");
-    let lives = parseInt(localStorage.getItem("lives") || "3");
-    let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
-    let score = 0;
-
-    function showPage(id) {
-      pages.forEach(p => document.getElementById(p).classList.remove("active"));
-      // Désactive page local si ouverte
-      const localPage = document.getElementById("local");
-      if(localPage) localPage.classList.remove("active");
-      document.getElementById(id).classList.add("active");
-      if (id === 'profile') updateProfile();
-      if (id === 'shop') updateShop();
+    let gameTimers = [null, null];
+    let scores = [0, 0];
+    let lives = [3, 3];
+    let currentBlocks = [null, null];
+    const blockSizeDesktop = 50;
+    const blockSizeMobile = 70;
+    
+    // Choix taille bloc selon écran
+    function getBlockSize() {
+      return window.innerWidth <= 600 ? blockSizeMobile : blockSizeDesktop;
     }
-
-    function chooseDifficulty(diff) {
-      selectedDifficulty = diff;
-      showPage('ready');
-    }
-
-    function updateUI() {
-      document.getElementById("lives").textContent = lives;
-      document.getElementById("trophies").textContent = trophies;
-      document.getElementById("multiplier").textContent = multiplier;
-      document.getElementById("score").textContent = score;
-    }
-
-    function spawnBlock(speed) {
-      const gameArea = document.getElementById("gameArea");
-      gameArea.innerHTML = "";
-      const block = document.createElement("div");
+    
+    function createBlock(playerIndex) {
+      const gameArea = document.getElementById(`gameArea${playerIndex + 1}`);
+      gameArea.innerHTML = '';
+      const block = document.createElement('div');
+      
       const isGray = Math.random() < 0.2;
-      block.className = "block " + (isGray ? "gray" : colors[Math.floor(Math.random() * colors.length)]);
-      block.style.top = Math.random() * (gameArea.clientHeight - 60) + "px";
-      block.style.left = Math.random() * (gameArea.clientWidth - 60) + "px";
+      block.className = 'block ' + (isGray ? 'gray' : colors[Math.floor(Math.random() * colors.length)]);
+      
+      const size = getBlockSize();
+      block.style.width = size + 'px';
+      block.style.height = size + 'px';
+      
+      block.style.top = Math.random() * (gameArea.clientHeight - size) + 'px';
+      block.style.left = Math.random() * (gameArea.clientWidth - size) + 'px';
 
       block.onclick = () => {
-        if (isGray) return endGame("Tu as cliqué un bloc gris !");
-        trophies += multiplier;
-        score++;
-        saveState();
+        if (isGray) {
+          alert(`Joueur ${playerIndex + 1} a cliqué un bloc gris !`);
+          endGame(playerIndex, 'perdu toutes ses vies (bloc gris) !');
+          return;
+        }
+        scores[playerIndex]++;
         updateUI();
-        clearTimeout(gameTimer);
-        spawnBlock(speed);
+        clearTimeout(gameTimers[playerIndex]);
+        spawnBlock(playerIndex);
       };
 
       gameArea.appendChild(block);
-      currentBlock = block;
+      currentBlocks[playerIndex] = { element: block, isGray };
+    }
 
-      gameTimer = setTimeout(() => {
-        if (!isGray) {
-          lives--;
-          if (lives <= 0) return endGame("Tu as perdu toutes tes vies !");
+    function spawnBlock(playerIndex) {
+      const difficultySpeed = 2000; // même vitesse pour les deux joueurs, ajustable
+      createBlock(playerIndex);
+      gameTimers[playerIndex] = setTimeout(() => {
+        // Bloc non cliqué
+        if (currentBlocks[playerIndex].isGray) {
+          // Ignorer bloc gris si non cliqué
+          spawnBlock(playerIndex);
+          return;
+        }
+        lives[playerIndex]--;
+        if (lives[playerIndex] <= 0) {
+          endGame(playerIndex, 'a perdu toutes ses vies !');
+          return;
         }
         updateUI();
-        spawnBlock(speed);
-      }, speed);
+        spawnBlock(playerIndex);
+      }, difficultySpeed);
+    }
+
+    function updateUI() {
+      for(let i=0; i<2; i++) {
+        document.getElementById(`player${i+1}Area`).querySelector('h2').textContent =
+          `Joueur ${i+1} — ❤️ ${lives[i]} — 🏆 ${scores[i]}`;
+      }
     }
 
     function startGame() {
-      showPage('game');
-      score = 0;
+      lives = [3, 3];
+      scores = [0, 0];
       updateUI();
-      let countdown = 3;
-      const countdownEl = document.getElementById("countdown");
-      countdownEl.textContent = countdown;
-      const countdownInterval = setInterval(() => {
-        countdown--;
-        if (countdown === 0) {
-          clearInterval(countdownInterval);
-          countdownEl.textContent = "";
-          spawnBlock(difficulties[selectedDifficulty]);
-        } else {
-          countdownEl.textContent = countdown;
+      spawnBlock(0);
+      spawnBlock(1);
+    }
+
+    function endGame(playerIndex, message) {
+      clearTimeout(gameTimers[0]);
+      clearTimeout(gameTimers[1]);
+      alert(`Fin du jeu ! Joueur ${playerIndex + 1} ${message}\n\nScores finaux:\nJoueur 1 : ${scores[0]} 🏆\nJoueur 2 : ${scores[1]} 🏆`);
+      // Remet à zéro
+      document.getElementById('gameArea1').innerHTML = '';
+      document.getElementById('gameArea2').innerHTML = '';
+      for(let i=0; i<2; i++) {
+        lives[i] = 3;
+        scores[i] = 0;
+      }
+      updateUI();
+    }
+
+    // Quitter bouton reload page (ou tu peux adapter)
+    document.getElementById('quitBtn').onclick = () => {
+      clearTimeout(gameTimers[0]);
+      clearTimeout(gameTimers[1]);
+      location.reload();
+    };
+
+    // Lancer automatiquement le jeu local au chargement
+    window.onload = () => {
+      startGame();
+    };
+
+    // Ajuster taille blocs au resize
+    window.addEventListener('resize', () => {
+      // Si un bloc existe, repositionne avec la bonne taille
+      for(let i=0; i<2; i++) {
+        if(currentBlocks[i]) {
+          const block = currentBlocks[i].element;
+          const size = getBlockSize();
+          block.style.width = size + 'px';
+          block.style.height = size + 'px';
+          const gameArea = document.getElementById(`gameArea${i + 1}`);
+          block.style.top = Math.min(parseFloat(block.style.top), gameArea.clientHeight - size) + 'px';
+          block.style.left = Math.min(parseFloat(block.style.left), gameArea.clientWidth - size) + 'px';
         }
-      }, 1000);
-    }
-
-    function endGame(msg) {
-      if (msg) alert("Game Over : " + msg + `\nScore final: ${score}\nTrophées gagnés: ${trophies}`);
-      clearTimeout(gameTimer);
-      saveState();
-      showPage('home');
-    }
-
-    function saveState() {
-      localStorage.setItem("trophies", trophies);
-      localStorage.setItem("lives", lives);
-      localStorage.setItem("multiplier", multiplier);
-    }
-
-    function updateProfile() {
-      document.getElementById("profileTrophies").textContent = trophies;
-      document.getElementById("profileLives").textContent = lives;
-      document.getElementById("profileMultiplier").textContent = multiplier;
-    }
-
-    function updateShop() {
-      const nextMult = multiplier + 1;
-      const cost = nextMult * 100;
-      document.getElementById("shopMultiplier").textContent = multiplier;
-      document.getElementById("nextMultiplier").textContent = nextMult;
-      document.getElementById("multiplierCost").textContent = cost;
-    }
-
-    function buyLife() {
-      if (trophies >= 50) {
-        trophies -= 50;
-        lives++;
-        saveState();
-        updateUI();
-        updateShop();
-      } else {
-        alert("Pas assez de trophées !");
       }
-    }
-
-    function upgradeMultiplier() {
-      const cost = (multiplier + 1) * 100;
-      if (trophies >= cost) {
-        trophies -= cost;
-        multiplier++;
-        saveState();
-        updateUI();
-        updateShop();
-      } else {
-        alert("Pas assez de trophées !");
-      }
-    }
-
-    // --- NOUVEAU : Mode Local ---
-    function goToLocal() {
-      // Cache toutes les pages normales
-      pages.forEach(p => document.getElementById(p).classList.remove("active"));
-      // Crée ou affiche la page locale
-      let localPage = document.getElementById("local");
-      if (!localPage) {
-        localPage = document.createElement("div");
-        localPage.id = "local";
-        localPage.className = "page active";
-        localPage.style.flexDirection = "column";
-        localPage.style.justifyContent = "center";
-        localPage.style.alignItems = "center";
-        localPage.innerHTML = `
-          <h1>Partage</h1>
-          <p>Mode multijoueur local à venir !</p>
-          <button class="btn" onclick="backToHome()">Retour</button>
-        `;
-        document.body.appendChild(localPage);
-      } else {
-        localPage.classList.add("active");
-      }
-    }
-
-    function backToHome() {
-      const localPage = document.getElementById("local");
-      if(localPage) localPage.classList.remove("active");
-      showPage('home');
-    }
+    });
   </script>
 </body>
 </html>
+
 
 
 
