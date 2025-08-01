@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blokz Reflex - Choix Mode</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #1f1f1f, #000);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      color: #00ffc8;
+      margin-bottom: 2rem;
+    }
+    button {
+      background: #00ffc8;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem 3rem;
+      margin: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #000;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #00ccaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Blokz Reflex</h1>
+  <button onclick="window.location.href='index.html'">Mode Solo</button>
+  <button onclick="window.location.href='multijoueur.html'">Mode Multijoueur Local</button>
+</body>
+</html>
