@@ -238,14 +238,9 @@
       let current = seconds;
       const interval = setInterval(() => {
         current--;
-        if (lives <= 0) {
-  alert("Tu n'as plus de vies, nouvelle partie commencera avec 3 vies.");
-  lives = 3;
-  saveData();
-  endGame();
-  return;
-}
-  else {
+        if (current > 0) {
+          countdownEl.textContent = current;
+        } else {
           clearInterval(interval);
           countdownEl.textContent = "";
           callback();
@@ -394,6 +389,23 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
