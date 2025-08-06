@@ -203,191 +203,280 @@
   <script>
     const pages = ["home", "ready", "game", "shop", "profile", "local"];
     const colors = ['red', 'blue', 'green', 'yellow'];
-    const difficulties = { easy: 3000, medium: 1500, impossible: 800 };
-    let gameTimer, currentBlock, selectedDifficulty = "easy";
-    let trophies = parseInt(localStorage.getItem("trophies") || "0");
-    let lives = parseInt(localStorage.getItem("lives") || "3");
-    let multiplier = parseInt(localStorage.getItem("multiplier") || "1");
+    const difficulties = { easy: 5000, medium: 3000, impossible: 1500 };
+    let gameDifficulty = null;
+    let gameTimer = null;
+    let blocks = [];
     let score = 0;
+    let lives = 3;
+    let trophies = 0;
+    let multiplier = 1;
+    let multiplierLevel = 1;
+    let gameRunning = false;
 
-    function showPage(id) {
-      pages.forEach(p => document.getElementById(p).classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-      if (id === 'shop') updateShop();
-      if (id === 'profile') updateProfile();
+    // LocalStorage keys
+    const STORAGE_KEYS = {
+      TROPHIES: 'blokz_trophies',
+      LIVES: 'blokz_lives',
+      MULTIPLIER_LEVEL: 'blokz_multiplier_level'
+    };
+
+    // Charger les données sauvegardées
+    function loadData() {
+      trophies = parseInt(localStorage.getItem(STORAGE_KEYS.TROPHIES)) || 0;
+      lives = parseInt(localStorage.getItem(STORAGE_KEYS.LIVES)) || 3;
+      multiplierLevel = parseInt(localStorage.getItem(STORAGE_KEYS.MULTIPLIER_LEVEL)) || 1;
+      updateMultiplier();
     }
 
-    function updateHUD() {
-      document.getElementById("lives").textContent = lives;
-      document.getElementById("trophies").textContent = trophies;
-      document.getElementById("multiplier").textContent = multiplier;
-      document.getElementById("score").textContent = score;
-    }
-
-    function updateShop() {
-      document.getElementById("shopMultiplier").textContent = multiplier;
-      document.getElementById("nextMultiplier").textContent = multiplier + 1;
-      document.getElementById("multiplierCost").textContent = multiplier * 100;
-    }
-
-    function updateProfile() {
-      document.getElementById("profileTrophies").textContent = trophies;
-      document.getElementById("profileLives").textContent = lives;
-      document.getElementById("profileMultiplier").textContent = multiplier;
-    }
-
+    // Sauvegarder les données
     function saveData() {
-      localStorage.setItem("trophies", trophies);
-      localStorage.setItem("lives", lives);
-      localStorage.setItem("multiplier", multiplier);
+      localStorage.setItem(STORAGE_KEYS.TROPHIES, trophies);
+      localStorage.setItem(STORAGE_KEYS.LIVES, lives);
+      localStorage.setItem(STORAGE_KEYS.MULTIPLIER_LEVEL, multiplierLevel);
     }
 
-    // Choix de la difficulté -> va sur l'écran prêt
+    // Mettre à jour le multiplicateur en fonction du niveau
+    function updateMultiplier() {
+      multiplier = 1 + (multiplierLevel - 1) * 0.5;
+    }
+
+    // Afficher la page demandée
+    function showPage(pageId) {
+      pages.forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      document.getElementById(pageId).classList.add('active');
+      if (pageId === 'profile') updateProfile();
+      if (pageId === 'shop') updateShop();
+    }
+
+    // Choisir la difficulté, aller à l'écran prêt
     function chooseDifficulty(diff) {
-      selectedDifficulty = diff;
+      gameDifficulty = diff;
       showPage('ready');
     }
 
-    // Démarre le jeu avec compte à rebours
-    function startGame() {
-      showPage('game');
-      score = 0;
-      updateHUD();
-      lives = 3;  // Remise à 3 vies à chaque début de partie
-      updateHUD();
-      countdown(3, () => spawnBlock());
+    // Mise à jour de l'affichage du profil
+    function updateProfile() {
+      document.getElementById('profileTrophies').textContent = trophies;
+      document.getElementById('profileLives').textContent = lives;
+      document.getElementById('profileMultiplier').textContent = multiplier.toFixed(1);
     }
 
-    // Compte à rebours avant lancement du jeu
-    function countdown(seconds, callback) {
+    // Mise à jour affichage boutique
+    function updateShop() {
+      document.getElementById('shopMultiplier').textContent = multiplier.toFixed(1);
+      document.getElementById('nextMultiplier').textContent = (multiplier + 0.5).toFixed(1);
+      const cost = multiplierLevel * 100;
+      document.getElementById('multiplierCost').textContent = cost;
+    }
+
+    // Commencer le jeu après écran prêt
+    function startGame() {
+      showPage('game');
+      resetGame();
+      countdownStart(() => {
+        gameRunning = true;
+        spawnBlock();
+      });
+    }
+
+    // Reset variables au début de partie
+    function resetGame() {
+      score = 0;
+      lives = 3; // On remet 3 vies à chaque partie
+      updateMultiplier();
+      updateHUD();
+      clearBlocks();
+    }
+
+    // Mise à jour HUD
+    function updateHUD() {
+      document.getElementById('lives').textContent = lives;
+      document.getElementById('trophies').textContent = trophies;
+      document.getElementById('multiplier').textContent = multiplier.toFixed(1);
+      document.getElementById('score').textContent = score;
+    }
+
+    // Nettoyer les blocs du jeu
+    function clearBlocks() {
+      const gameArea = document.getElementById('gameArea');
+      gameArea.innerHTML = '';
+      blocks = [];
+    }
+
+    // Affichage du compte à rebours avant démarrage
+    function countdownStart(callback) {
       const countdownEl = document.getElementById('countdown');
-      countdownEl.textContent = seconds;
-      let current = seconds;
+      let count = 3;
+      countdownEl.textContent = count;
       const interval = setInterval(() => {
-        current--;
-        if (current > 0) {
-          countdownEl.textContent = current;
+        count--;
+        if (count > 0) {
+          countdownEl.textContent = count;
         } else {
           clearInterval(interval);
-          countdownEl.textContent = "";
+          countdownEl.textContent = '';
           callback();
         }
       }, 1000);
     }
 
-    // Génère un bloc aléatoire (coloré ou gris)
+    // Générer un bloc aléatoire dans le jeu
     function spawnBlock() {
+      if (!gameRunning) return;
       const gameArea = document.getElementById('gameArea');
-      if (currentBlock) {
-        currentBlock.remove();
-        currentBlock = null;
-      }
 
-      const block = document.createElement('div');
-      block.classList.add('block');
-
-      // 20% de chances bloc gris
-      const isGray = Math.random() < 0.2;
-      if (isGray) {
-        block.classList.add('gray');
-      } else {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        block.classList.add(color);
-      }
-
-      // Position aléatoire dans la zone de jeu (en tenant compte de la taille du bloc)
+      // Taille de la zone jeu
       const maxX = gameArea.clientWidth - 60;
       const maxY = gameArea.clientHeight - 60;
-      block.style.left = Math.floor(Math.random() * maxX) + 'px';
-      block.style.top = Math.floor(Math.random() * maxY) + 'px';
 
-      gameArea.appendChild(block);
-      currentBlock = block;
+      // Position aléatoire
+      const x = Math.floor(Math.random() * maxX);
+      const y = Math.floor(Math.random() * maxY);
 
-      // Temps pour cliquer selon difficulté
-      gameTimer = setTimeout(() => {
-        // Si on a pas cliqué sur un bloc coloré à temps -> perte de vie
-        if (!block.classList.contains('gray')) {
-          lives--;
-          updateHUD();
-          if (lives <= 0) {
-            endGame();
-            return;
-          }
-        }
-        spawnBlock();
-      }, difficulties[selectedDifficulty]);
+      // Couleur du bloc (25% gris, 75% coloré)
+      let color = 'gray';
+      if (Math.random() < 0.75) {
+        color = colors[Math.floor(Math.random() * colors.length)];
+      }
 
-      // Gestion du clic sur le bloc
+      // Création du bloc
+      const block = document.createElement('div');
+      block.classList.add('block', color);
+      block.style.left = x + 'px';
+      block.style.top = y + 'px';
+      block.dataset.color = color;
+
+      // Événement clic
       block.addEventListener('click', () => {
-        if (block.classList.contains('gray')) {
-          // Perte immédiate, mais on ne bloque pas, on termine et on remet vies
-          alert("Tu as cliqué sur un bloc gris ! Partie terminée.");
-          saveData();
-          endGame();
-          return;
+        if (!gameRunning) return;
+        if (color === 'gray') {
+          // Bloc gris cliqué -> fin immédiate
+          endGame(true);
         } else {
-          // Bloc coloré cliqué -> + score et trophées
+          // Bloc coloré cliqué -> gagne points
           score++;
-          trophies += multiplier;
+          trophies++;
           updateHUD();
-          saveData();
-          clearTimeout(gameTimer);
+          multiplierCheck();
+          removeBlock(block);
+          // Immédiatement spawn un autre bloc
           spawnBlock();
         }
       });
+
+      gameArea.appendChild(block);
+      blocks.push(block);
+
+      // Timer disparition bloc selon difficulté
+      const timeout = difficulties[gameDifficulty];
+      setTimeout(() => {
+        if (!gameRunning) return;
+        // Si le bloc est encore là => perte d'une vie si coloré, sinon rien
+        if (blocks.includes(block)) {
+          if (color !== 'gray') {
+            lives--;
+            if (lives <= 0) {
+              endGame();
+              return;
+            } else {
+              updateHUD();
+            }
+          }
+          removeBlock(block);
+          // Spawn un nouveau bloc
+          spawnBlock();
+        }
+      }, timeout);
     }
 
-    // Fin de la partie
-    function endGame() {
-      clearTimeout(gameTimer);
-      alert(`Partie terminée !\nScore final : ${score}\nTrophées gagnés : ${score * multiplier}`);
-      trophies += score * multiplier;
-      saveData();
-      lives = 3; // Remise des vies à 3 pour pouvoir rejouer sans bloquer
-      saveData();
-      showPage('home');
+    // Enlever un bloc du jeu
+    function removeBlock(block) {
+      if (!block) return;
+      const idx = blocks.indexOf(block);
+      if (idx !== -1) blocks.splice(idx, 1);
+      if (block.parentElement) block.parentElement.removeChild(block);
     }
 
-    // Boutique
-    function buyLife() {
-      if (trophies >= 50) {
-        trophies -= 50;
-        lives++;
-        saveData();
-        alert("Vie achetée !");
-        updateShop();
+    // Vérifier si on peut augmenter multiplicateur selon score
+    function multiplierCheck() {
+      // Par exemple : +1 niveau tous les 10 points
+      const newLevel = Math.floor(score / 10) + 1;
+      if (newLevel > multiplierLevel) {
+        multiplierLevel = newLevel;
+        updateMultiplier();
         updateHUD();
-      } else {
-        alert("Pas assez de trophées !");
       }
     }
 
-    function upgradeMultiplier() {
-      const cost = multiplier * 100;
+    // Fin du jeu
+    // clickedGray : booléen indiquant si fin immédiate ou par perte de vie
+    function endGame(clickedGray = false) {
+      gameRunning = false;
+      clearBlocks();
+      saveData();
+
+      // Ajouter les trophées gagnés en partie
+      trophies += score * multiplier;
+      trophies = Math.floor(trophies);
+      saveData();
+
+      // Afficher score final + trophées
+      alert(`Fin du jeu!\nScore : ${score}\nTrophées gagnés : ${score * multiplier}\nTotal de trophées : ${trophies}`);
+
+      // Retour accueil
+      showPage('home');
+      updateProfile();
+    }
+
+    // Acheter vie dans la boutique
+    function buyLife() {
+      const cost = 50;
       if (trophies >= cost) {
         trophies -= cost;
-        multiplier++;
+        lives++;
         saveData();
-        alert(`Multiplicateur amélioré à x${multiplier} !`);
         updateShop();
-        updateHUD();
+        updateProfile();
+        alert("Vie achetée !");
       } else {
-        alert("Pas assez de trophées !");
+        alert("Trophées insuffisants.");
       }
     }
 
-    // Page mode local (placeholder)
+    // Améliorer multiplicateur
+    function upgradeMultiplier() {
+      const cost = multiplierLevel * 100;
+      if (trophies >= cost) {
+        trophies -= cost;
+        multiplierLevel++;
+        updateMultiplier();
+        saveData();
+        updateShop();
+        updateProfile();
+        alert("Multiplicateur amélioré !");
+      } else {
+        alert("Trophées insuffisants.");
+      }
+    }
+
+    // Mode local (placeholder)
     function goToLocal() {
       showPage('local');
     }
 
-    // Initialisation affichage
-    updateHUD();
-
+    // Au chargement de la page
+    window.onload = () => {
+      loadData();
+      updateProfile();
+      updateHUD();
+    };
   </script>
 </body>
 </html>
+
 
 
 
