@@ -1,7 +1,7 @@
 {
   "name": "Blokz Reflex",
   "short_name": "Blokz",
-  "start_url": "/",
+  "start_url": "/blokz-reflex.com/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#1a73e8",
