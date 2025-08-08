@@ -7,7 +7,8 @@
 
   <!-- Manifest pour PWA -->
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#00ffc8" />
+<link rel="icon" href="icon-192.png" type="image/png" />
+<meta name="theme-color" content="#00ffc8" />
 
   <!-- Ton CSS ou autres liens ici -->
 </head>
@@ -405,13 +406,11 @@
 </html
   <!-- Script d'enregistrement du service worker pour PWA -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log('Service Worker enregistré:', reg))
-          .catch(err => console.log('Erreur enregistrement Service Worker:', err));
-      });
-    }
-  </script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("Service Worker enregistré"))
+      .catch(e => console.error("Erreur Service Worker", e));
+  }
+</script>
 </body>
 </html>
