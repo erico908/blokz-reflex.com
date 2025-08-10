@@ -2,59 +2,40 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Blokz Reflex - Mode Local</title>
 <style>
   body {
     margin: 0; font-family: Arial, sans-serif; background: #111; color: white;
-    display: flex; flex-direction: column; height: 100vh; align-items: center; justify-content: center;
-  }
-  #playerForm {
-    text-align: center;
+    overflow: hidden;
   }
   #gameContainer {
-    display: none;
-    width: 100vw; height: 100vh;
     display: flex;
-    background: #222;
+    width: 100vw;
+    height: 100vh;
   }
   .playerScreen {
     flex: 1;
     border: 2px solid #888;
     margin: 5px;
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     position: relative;
-    padding-top: 40px;
-    overflow: hidden;
+    background: #222;
     user-select: none;
+    overflow: hidden;
   }
   .lives {
     position: absolute;
     top: 10px; left: 10px;
     font-size: 18px;
     color: #0f0;
+    z-index: 10;
   }
   .playerName {
     position: absolute;
     top: 10px; right: 10px;
     font-size: 18px;
     color: #0ff;
-  }
-  #winnerScreen {
-    display: none;
-    text-align: center;
-  }
-  button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-    background-color: #4caf50;
-    color: white;
-  }
-  button:hover {
-    background-color: #45a049;
+    z-index: 10;
   }
   .block {
     width: 60px;
@@ -70,19 +51,93 @@
     transform: scale(1.1);
     box-shadow: 0 0 15px #fff;
   }
+  #quitBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #e74c3c;
+    font-weight: bold;
+    z-index: 10000;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+  }
+  #quitBtn:hover {
+    background-color: #c0392b;
+  }
+  #startOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1000;
+  }
+  #startOverlay input {
+    font-size: 18px;
+    padding: 8px;
+    margin: 5px;
+    border-radius: 5px;
+    border: none;
+  }
+  #startOverlay button {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+  }
+  #startOverlay button:hover {
+    background-color: #45a049;
+  }
+  #winnerScreen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    z-index: 2000;
+    display: none;
+  }
+  #winnerScreen button {
+    margin-top: 20px;
+    font-size: 20px;
+    padding: 10px 30px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+  }
+  #winnerScreen button:hover {
+    background-color: #45a049;
+  }
 </style>
 </head>
 <body>
 
-  <div id="playerForm">
+  <button id="quitBtn">Quitter</button>
+
+  <div id="startOverlay">
     <h2>Entrez les noms des joueurs</h2>
     <input id="player1Name" placeholder="Joueur 1" />
     <input id="player2Name" placeholder="Joueur 2" />
-    <br />
     <button id="startGameBtn">Commencer la partie</button>
   </div>
 
-  <div id="gameContainer">
+  <div id="gameContainer" style="display:none;">
     <div id="player1" class="playerScreen">
       <div class="lives" id="lives1">Vies: 10</div>
       <div class="playerName" id="name1"></div>
@@ -94,41 +149,147 @@
   </div>
 
   <div id="winnerScreen">
-    <h1 id="winnerText"></h1>
+    <div id="winnerText"></div>
     <button id="restartBtn">Recommencer</button>
-    <button id="quitBtn">Quitter</button>
   </div>
 
 <script>
-  const playerForm = document.getElementById('playerForm');
+  const quitBtn = document.getElementById('quitBtn');
+  const startOverlay = document.getElementById('startOverlay');
   const startGameBtn = document.getElementById('startGameBtn');
   const gameContainer = document.getElementById('gameContainer');
-  const winnerScreen = document.getElementById('winnerScreen');
-  const winnerText = document.getElementById('winnerText');
-  const restartBtn = document.getElementById('restartBtn');
-  const quitBtn = document.getElementById('quitBtn');
-
+  const player1Screen = document.getElementById('player1');
+  const player2Screen = document.getElementById('player2');
   const lives1El = document.getElementById('lives1');
   const lives2El = document.getElementById('lives2');
   const name1El = document.getElementById('name1');
   const name2El = document.getElementById('name2');
-
-  const player1Screen = document.getElementById('player1');
-  const player2Screen = document.getElementById('player2');
+  const winnerScreen = document.getElementById('winnerScreen');
+  const winnerText = document.getElementById('winnerText');
+  const restartBtn = document.getElementById('restartBtn');
 
   let player1 = { name: '', lives: 10 };
   let player2 = { name: '', lives: 10 };
 
-  const blockDuration = 1000; // blocs disparaissent en 1 seconde
-  const spawnIntervalTime = 700; // un bloc toutes les 0.7 secondes
-
-  let spawnInterval1 = null;
-  let spawnInterval2 = null;
-
-  let activeBlocksTimers1 = new Map();
-  let activeBlocksTimers2 = new Map();
-
+  const blockDuration = 1000;
   const colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple'];
+
+  let currentBlockElements = [null, null];
+  let activeBlockTimeouts = [null, null];
+  let spawnTimeouts = [null, null];
+
+  function updateLives() {
+    lives1El.textContent = `Vies: ${player1.lives}`;
+    lives2El.textContent = `Vies: ${player2.lives}`;
+  }
+
+  function getRandomPosition(container, blockSize) {
+    const rect = container.getBoundingClientRect();
+    const x = Math.floor(Math.random() * (rect.width - blockSize));
+    const y = Math.floor(Math.random() * (rect.height - blockSize - 40)) + 40; // laisse 40px pour lives/name
+    return { x, y };
+  }
+
+  function createBlock(playerNum) {
+    const i = playerNum - 1;
+    if (currentBlockElements[i]) return;
+
+    const block = document.createElement('div');
+    block.classList.add('block');
+
+    const isGrey = Math.random() < 0.2;
+    if (isGrey) {
+      block.style.backgroundColor = 'grey';
+      block.dataset.isGrey = 'true';
+    } else {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      block.style.backgroundColor = color;
+      block.dataset.isGrey = 'false';
+    }
+
+    const container = playerNum === 1 ? player1Screen : player2Screen;
+    const blockSize = 60;
+    const pos = getRandomPosition(container, blockSize);
+    block.style.left = pos.x + 'px';
+    block.style.top = pos.y + 'px';
+
+    container.appendChild(block);
+
+    block.onclick = () => {
+      const isGreyBlock = block.dataset.isGrey === 'true';
+      if (isGreyBlock) {
+        loseLife(playerNum === 1 ? player1 : player2);
+      }
+      clearTimeout(activeBlockTimeouts[i]);
+      activeBlockTimeouts[i] = null;
+      currentBlockElements[i] = null;
+      block.remove();
+      checkGameOver();
+      scheduleNextBlock(playerNum);
+    };
+
+    currentBlockElements[i] = block;
+
+    activeBlockTimeouts[i] = setTimeout(() => {
+      if (currentBlockElements[i]) {
+        const isGreyBlock = currentBlockElements[i].dataset.isGrey === 'true';
+        currentBlockElements[i].remove();
+        currentBlockElements[i] = null;
+
+        if (!isGreyBlock) {
+          loseLife(playerNum === 1 ? player1 : player2);
+          checkGameOver();
+        }
+        activeBlockTimeouts[i] = null;
+        scheduleNextBlock(playerNum);
+      }
+    }, blockDuration);
+  }
+
+  function scheduleNextBlock(playerNum) {
+    const i = playerNum - 1;
+    if (spawnTimeouts[i]) clearTimeout(spawnTimeouts[i]);
+    spawnTimeouts[i] = setTimeout(() => {
+      createBlock(playerNum);
+    }, 100);
+  }
+
+  function loseLife(player) {
+    player.lives--;
+    updateLives();
+  }
+
+  function checkGameOver() {
+    if (player1.lives <= 0) {
+      endGame(player2.name);
+    } else if (player2.lives <= 0) {
+      endGame(player1.name);
+    }
+  }
+
+  function endGame(winnerName) {
+    stopAllBlocks();
+    gameContainer.style.display = 'none';
+    winnerScreen.style.display = 'flex';
+    winnerText.textContent = `Le gagnant est ${winnerName} !`;
+  }
+
+  function stopAllBlocks() {
+    for (let i = 0; i < 2; i++) {
+      if (activeBlockTimeouts[i]) {
+        clearTimeout(activeBlockTimeouts[i]);
+        activeBlockTimeouts[i] = null;
+      }
+      if (spawnTimeouts[i]) {
+        clearTimeout(spawnTimeouts[i]);
+        spawnTimeouts[i] = null;
+      }
+      if (currentBlockElements[i]) {
+        currentBlockElements[i].remove();
+        currentBlockElements[i] = null;
+      }
+    }
+  }
 
   startGameBtn.onclick = () => {
     const p1 = document.getElementById('player1Name').value.trim();
@@ -148,146 +309,34 @@
     name2El.textContent = player2.name;
     updateLives();
 
-    playerForm.style.display = 'none';
+    startOverlay.style.display = 'none';
     winnerScreen.style.display = 'none';
     gameContainer.style.display = 'flex';
-
-    startSpawningBlocks();
   };
 
-  function updateLives() {
-    lives1El.textContent = `Vies: ${player1.lives}`;
-    lives2El.textContent = `Vies: ${player2.lives}`;
-  }
-
-  function getRandomPosition(container, blockSize) {
-    const rect = container.getBoundingClientRect();
-    const x = Math.floor(Math.random() * (rect.width - blockSize));
-    const y = Math.floor(Math.random() * (rect.height - blockSize - 40)) + 40;
-    return { x, y };
-  }
-
-  function createBlock(playerNum) {
-    const block = document.createElement('div');
-    block.classList.add('block');
-
-    // 20% chance d'être gris
-    const isGrey = Math.random() < 0.2;
-    if (isGrey) {
-      block.style.backgroundColor = 'grey';
-      block.dataset.isGrey = 'true';
-    } else {
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      block.style.backgroundColor = color;
-      block.dataset.isGrey = 'false';
-    }
-
-    const id = Math.random().toString(36).substr(2, 9);
-    block.dataset.id = id;
-
-    const container = playerNum === 1 ? player1Screen : player2Screen;
-
-    const blockSize = 60;
-    const pos = getRandomPosition(container, blockSize);
-
-    block.style.left = pos.x + 'px';
-    block.style.top = pos.y + 'px';
-
-    container.appendChild(block);
-
-    block.onclick = () => {
-      const isGreyBlock = block.dataset.isGrey === 'true';
-      if (isGreyBlock) {
-        if (playerNum === 1) {
-          clearTimeout(activeBlocksTimers1.get(id));
-          activeBlocksTimers1.delete(id);
-          loseLife(player1);
-        } else {
-          clearTimeout(activeBlocksTimers2.get(id));
-          activeBlocksTimers2.delete(id);
-          loseLife(player2);
-        }
-      } else {
-        if (playerNum === 1) {
-          clearTimeout(activeBlocksTimers1.get(id));
-          activeBlocksTimers1.delete(id);
-        } else {
-          clearTimeout(activeBlocksTimers2.get(id));
-          activeBlocksTimers2.delete(id);
-        }
-      }
-      block.remove();
-    };
-
-    const timeoutId = setTimeout(() => {
-      block.remove();
-      if (playerNum === 1) {
-        activeBlocksTimers1.delete(id);
-        if (block.dataset.isGrey === 'false') {
-          loseLife(player1);
-        }
-      } else {
-        activeBlocksTimers2.delete(id);
-        if (block.dataset.isGrey === 'false') {
-          loseLife(player2);
-        }
-      }
-    }, blockDuration);
-
-    if (playerNum === 1) {
-      activeBlocksTimers1.set(id, timeoutId);
-    } else {
-      activeBlocksTimers2.set(id, timeoutId);
-    }
-  }
-
-  function loseLife(player) {
-    player.lives--;
-    updateLives();
-    checkGameOver();
-  }
-
-  function checkGameOver() {
-    if (player1.lives <= 0) {
-      endGame(player2.name);
-    } else if (player2.lives <= 0) {
-      endGame(player1.name);
-    }
-  }
-
-  function endGame(winnerName) {
-    clearInterval(spawnInterval1);
-    clearInterval(spawnInterval2);
-    removeAllBlocks();
-
-    gameContainer.style.display = 'none';
-    winnerScreen.style.display = 'block';
-    winnerText.textContent = `Le gagnant est ${winnerName} !`;
-  }
-
-  function removeAllBlocks() {
-    Array.from(player1Screen.querySelectorAll('.block')).forEach(b => b.remove());
-    Array.from(player2Screen.querySelectorAll('.block')).forEach(b => b.remove());
-    activeBlocksTimers1.forEach(t => clearTimeout(t));
-    activeBlocksTimers2.forEach(t => clearTimeout(t));
-    activeBlocksTimers1.clear();
-    activeBlocksTimers2.clear();
-  }
-
-  function startSpawningBlocks() {
-    spawnInterval1 = setInterval(() => createBlock(1), spawnIntervalTime);
-    spawnInterval2 = setInterval(() => createBlock(2), spawnIntervalTime);
-  }
-
   restartBtn.onclick = () => {
-    playerForm.style.display = 'block';
+    stopAllBlocks();
+    startOverlay.style.display = 'flex';
     winnerScreen.style.display = 'none';
+    gameContainer.style.display = 'none';
   };
 
   quitBtn.onclick = () => {
     window.location.href = 'index.html';
   };
+
+  // Quand la partie démarre, on lance le premier bloc pour chaque joueur
+  const observer = new MutationObserver(() => {
+    if (gameContainer.style.display === 'flex') {
+      // début du jeu
+      scheduleNextBlock(1);
+      scheduleNextBlock(2);
+    }
+  });
+
+  observer.observe(gameContainer, { attributes: true, attributeFilter: ['style'] });
 </script>
 
 </body>
 </html>
+
