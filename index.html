@@ -212,8 +212,19 @@
   <!-- MODE LOCAL -->
   <div id="local" class="page">
     <h1>Mode Local</h1>
-    <p>Mode multijoueur local à venir !</p>
-    <button class="btn" onclick="showPage('home')">Retour</button>
+    <script>
+  document.getElementById('localBtn').addEventListener('click', function() {
+    // Remplace par la fonction qui lance ton mode local
+    startLocalMode();
+  });
+
+  function startLocalMode() {
+    // Code pour démarrer le mode local
+    alert("Mode local démarré !");
+    // Ou bien redirection vers la page du mode local, par ex:
+    // window.location.href = "local.html";
+  }
+</script> 
   </div>
 
   <script>
