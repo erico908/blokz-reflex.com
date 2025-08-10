@@ -395,16 +395,14 @@
     }
 
     // Page mode local (placeholder)
-    <!-- MODE LOCAL -->
-<div id="local" class="page">
-  <h1>Mode Local</h1>
-  <button class="btn" onclick="window.location.href='local.html'">Commencer</button>
-  <button class="btn" onclick="showPage('home')">Retour</button>
-</div>
-               
-   // Initialisation affichage
-    updateHUD();      
- </script>
+    function goToLocal() {
+      showPage('local');
+    }
+
+    // Initialisation affichage
+    updateHUD();
+
+  </script>
 </body>
 </html
   <!-- Script d'enregistrement du service worker pour PWA -->
