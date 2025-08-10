@@ -88,10 +88,10 @@
     user-select: none;
     position: absolute;
     box-shadow: 0 0 10px #000;
-    transition: transform 0.2s;
+    transition: transform 0.15s;
   }
   .block:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
     box-shadow: 0 0 15px #fff;
   }
   select {
@@ -162,7 +162,6 @@
 
   // Game constants
   const blockDuration = 1000; // 1 seconde
-  // spawnInterval est remplacé par une logique "un seul bloc à la fois"
 
   // Players data
   let player1 = { name: '', lives: 10 };
@@ -236,91 +235,14 @@
   }
 
   // Get random position inside player container
-  function getRandomPosition(container, blockSize) {
+  function getRandomPosition(container, blockSize = 60) {
     const rect = container.getBoundingClientRect();
-    const x = Math.floor(Math.random() * (rect.width - blockSize));
-    const y = Math.floor(Math.random() * (rect.height - blockSize - 40)) + 40; // sous header
+    const x = Math.random() * (rect.width - blockSize);
+    const y = Math.random() * (rect.height - blockSize - 40) + 40; // 40 pour laisser place au top bar
     return { x, y };
   }
 
-  // Create and place a block for a player (index 0 or 1)
-  function spawnBlock(playerIndex) {
-    if (!gameActive) return;
-
-    // Remove existing block if any (should not happen ideally)
-    if (currentBlockElements[playerIndex]) {
-      removeBlock(playerIndex);
-    }
-
-    const container = playerIndex === 0 ? player1Screen : player2Screen;
-    const blockSize = 60;
-    const pos = getRandomPosition(container, blockSize);
-
-    const block = document.createElement('div');
-    block.classList.add('block');
-
-    // 20% chance d'être gris (bloc à ne pas cliquer, fait perdre la partie instantanément)
-    const isGray = Math.random() < 0.2;
-    block.style.backgroundColor = isGray ? 'gray' : colors[Math.floor(Math.random() * colors.length)];
-
-    block.style.left = pos.x + 'px';
-    block.style.top = pos.y + 'px';
-
-    container.appendChild(block);
-    currentBlockElements[playerIndex] = block;
-
-    // Timer pour disparition du bloc
-    activeTimeouts[playerIndex] = setTimeout(() => {
-      // Si le bloc est encore là et non cliqué
-      if (currentBlockElements[playerIndex] === block) {
-        // Si c'est un bloc gris non cliqué => perte instantanée
-        if (isGray) {
-          loseGame(playerIndex);
-          return;
-        }
-        // Sinon, perte d'une vie
-        if (playerIndex === 0) {
-          player1.lives--;
-          updateLives();
-          if (player1.lives <= 0) {
-            loseGame(playerIndex);
-            return;
-          }
-        } else {
-          player2.lives--;
-          updateLives();
-          if (player2.lives <= 0) {
-            loseGame(playerIndex);
-            return;
-          }
-        }
-        removeBlock(playerIndex);
-        spawnBlock(playerIndex);
-      }
-    }, blockDuration);
-
-    // Clic sur bloc
-    block.onclick = () => {
-      if (!gameActive) return;
-
-      // Si bloc gris => perte immédiate
-      if (isGray) {
-        loseGame(playerIndex);
-        return;
-      }
-      // Sinon clic correct => on supprime bloc, on relance un nouveau
-      clearTimeout(activeTimeouts[playerIndex]);
-      removeBlock(playerIndex);
-      spawnBlock(playerIndex);
-
-      // Si bot, pas d'action, si humain et joueur 2 est bot, on peut annuler timeout bot pour ne pas interférer
-      if (player2.isBot && playerIndex === 1) {
-        // on n'interfère pas, bot ne clique pas manuellement
-      }
-    };
-  }
-
-  // Supprime bloc visible et clear timeout
+  // Remove block if exists
   function removeBlock(playerIndex) {
     if (currentBlockElements[playerIndex]) {
       currentBlockElements[playerIndex].remove();
@@ -332,7 +254,7 @@
     }
   }
 
-  // Game lost
+  // Lose game handler (le joueurIndex passé est celui qui a échoué)
   function loseGame(playerIndex) {
     gameActive = false;
     removeBlock(0);
@@ -341,80 +263,170 @@
       clearTimeout(botActionTimeout);
       botActionTimeout = null;
     }
-
-    winnerText.textContent = playerIndex === 0 ? `${player2.name} a gagné !` : `${player1.name} a gagné !`;
+    const winnerIndex = playerIndex === 0 ? 1 : 0;
+    winnerText.textContent = `${winnerIndex === 0 ? player1.name : player2.name} a gagné !`;
     gameContainer.style.display = 'none';
     winnerScreen.style.display = 'block';
   }
 
-  // Restart game button
-  restartBtn.onclick = () => {
-    playerForm.style.display = 'block';
-    winnerScreen.style.display = 'none';
-    gameContainer.style.display = 'none';
-    player1.lives = 10;
-    player2.lives = 10;
-    updateLives();
-  };
+  // Spawn a new block for player
+  function spawnBlock(playerIndex) {
+    if (!gameActive) return;
 
-  // Bot AI logic
+    removeBlock(playerIndex);
+
+    const container = playerIndex === 0 ? player1Screen : player2Screen;
+
+    // Création du bloc
+    const block = document.createElement('div');
+    block.classList.add('block');
+
+    // 20% chance d'être gris (bloc qui fait -1 vie si cliqué)
+    const isGray = Math.random() < 0.2;
+    if (isGray) {
+      block.style.backgroundColor = 'gray';
+      block.dataset.isGray = 'true';
+    } else {
+      // Couleur aléatoire parmi colors
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      block.style.backgroundColor = color;
+      block.dataset.isGray = 'false';
+    }
+
+    // Position aléatoire
+    const pos = getRandomPosition(container);
+    block.style.left = `${pos.x}px`;
+    block.style.top = `${pos.y}px`;
+
+    // Ajouter au DOM
+    container.appendChild(block);
+    currentBlockElements[playerIndex] = block;
+
+    // Click event
+    block.onclick = () => {
+      if (!gameActive) return;
+      const isGrayBlock = block.dataset.isGray === 'true';
+
+      if (isGrayBlock) {
+        // Cliquer sur bloc gris => perte d'une vie puis le bloc disparaît
+        if (playerIndex === 0) {
+          player1.lives = Math.max(0, player1.lives - 1);
+        } else {
+          player2.lives = Math.max(0, player2.lives - 1);
+        }
+        updateLives();
+        removeBlock(playerIndex);
+        // Spawn nouveau bloc après la suppression
+        if (gameActive) spawnBlock(playerIndex);
+        // Fin de partie si vies à 0
+        if (player1.lives <= 0) loseGame(0);
+        if (player2.lives <= 0) loseGame(1);
+        return;
+      }
+
+      // Sinon bloc coloré cliqué => on continue, pas de perte
+      clearTimeout(activeTimeouts[playerIndex]);
+      removeBlock(playerIndex);
+      spawnBlock(playerIndex);
+    };
+
+    // Timer disparition
+    activeTimeouts[playerIndex] = setTimeout(() => {
+      // Si bloc toujours présent (non cliqué)
+      if (currentBlockElements[playerIndex] === block) {
+        if (block.dataset.isGray === 'true') {
+          // Bloc gris non cliqué => suppression + spawn (pas de perte)
+          removeBlock(playerIndex);
+          if (gameActive) spawnBlock(playerIndex);
+          return;
+        }
+
+        // Bloc coloré non cliqué => perte d'une vie
+        if (playerIndex === 0) {
+          player1.lives = Math.max(0, player1.lives - 1);
+        } else {
+          player2.lives = Math.max(0, player2.lives - 1);
+        }
+        updateLives();
+
+        // Fin si vies = 0
+        if (player1.lives <= 0) { loseGame(0); return; }
+        if (player2.lives <= 0) { loseGame(1); return; }
+
+        removeBlock(playerIndex);
+        if (gameActive) spawnBlock(playerIndex);
+      }
+    }, blockDuration);
+  }
+
+  // Bot action scheduler (adapté pour simuler erreurs humaines)
   function scheduleBotAction() {
     if (!gameActive || !player2.isBot) return;
-    if (!currentBlockElements[1]) return;
-    if (player2.lives <= 0) return;
 
-    // Probabilité d'erreur et délai selon difficulté
-    let errorChance, delay;
-    switch(player2.difficulty) {
+    // Selon difficulté : délai et probabilité d'oublier (missChance)
+    let delay, missChance;
+    switch (player2.difficulty) {
       case 'easy':
-        errorChance = 0.3; // 30% rate
-        delay = 900;
+        delay = 800 + Math.random() * 500; // 800 à 1300 ms
+        missChance = 0.5; // oublie souvent (débutant)
         break;
       case 'medium':
-        errorChance = 0.15;
-        delay = 600;
+        delay = 500 + Math.random() * 300; // 500 à 800 ms
+        missChance = 0.2; // oublie parfois (joueur régulier)
         break;
       case 'hard':
-        errorChance = 0.05;
-        delay = 300;
+        delay = 250 + Math.random() * 250; // 250 à 500 ms
+        missChance = 0.05; // quasi jamais (pro)
         break;
       default:
-        errorChance = 0.3;
         delay = 900;
+        missChance = 0.5;
     }
 
     clearTimeout(botActionTimeout);
     botActionTimeout = setTimeout(() => {
       if (!gameActive) return;
 
-      const block = currentBlockElements[1];
-      if (!block) return;
+      const block = currentBlockElements[1]; // zone du joueur 2 (bot)
+      if (!block) {
+        scheduleBotAction();
+        return;
+      }
 
-      if (Math.random() > errorChance) {
-        // Bot clique bien (sauf si gris)
-        if (block.style.backgroundColor !== 'gray') {
+      // Si bloc coloré : décider si le bot clique ou oublie (missChance)
+      if (block.dataset.isGray === 'false') {
+        if (Math.random() > missChance) {
+          // bot clique
           block.click();
         } else {
-          // bot rate si bloc gris
-          // bot ne clique pas et perd une vie à timeout
+          // bot oublie (ne clique pas) => laisser le timeout traiter la perte
         }
       } else {
-        // bot rate => ne clique pas (perd vie à timeout)
+        // bloc gris : bot évite (ne clique pas), laisse timeout le supprimer
       }
-      // Programmer prochain coup
+
+      // On re-programme la prochaine action du bot
       scheduleBotAction();
     }, delay);
   }
 
-  // Empêche zoom mobile / desktop via clavier et gestures
-  window.addEventListener('wheel', e => {
-    if (e.ctrlKey) e.preventDefault();
-  }, { passive: false });
+  // Restart button
+  restartBtn.onclick = () => {
+    playerForm.style.display = 'block';
+    gameContainer.style.display = 'none';
+    winnerScreen.style.display = 'none';
+    player1.lives = 10;
+    player2.lives = 10;
+    updateLives();
+    gameActive = false;
+    removeBlock(0);
+    removeBlock(1);
+    if (botActionTimeout) { clearTimeout(botActionTimeout); botActionTimeout = null; }
+  };
 
-  window.addEventListener('touchmove', e => {
-    if (e.scale !== 1) e.preventDefault();
-  }, { passive: false });
-
+  // Empêche zoom sur mobile/desktop (déjà présent si tu veux)
+  window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  window.addEventListener('touchmove', e => { if (e.scale !== 1) e.preventDefault(); }, { passive: false });
   window.addEventListener('keydown', e => {
     if ((e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) || (e.key === 'F11')) {
       e.preventDefault();
@@ -424,4 +436,3 @@
 </script>
 </body>
 </html>
-
