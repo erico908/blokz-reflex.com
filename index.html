@@ -210,22 +210,12 @@
   </div>
 
   <!-- MODE LOCAL -->
-  <div id="local" class="page">
-    <h1>Mode Local</h1>
-    <script>
-  document.getElementById('localBtn').addEventListener('click', function() {
-    // Remplace par la fonction qui lance ton mode local
-    startLocalMode();
-  });
+<div id="local" class="page">
+  <h1>Mode Local</h1>
+  <button class="btn" onclick="window.location.href='local.html'">Commencer</button>
+  <button class="btn" onclick="showPage('home')">Retour</button>
+</div>
 
-  function startLocalMode() {
-    // Code pour démarrer le mode local
-    alert("Mode local démarré !");
-    // Ou bien redirection vers la page du mode local, par ex:
-    // window.location.href = "local.html";
-  }
-</script> 
-  </div>
 
   <script>
     const pages = ["home", "ready", "game", "shop", "profile", "local"];
