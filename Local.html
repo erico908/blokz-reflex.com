@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Blokz Reflex - Mode Local</title>
+<style>
+  body {
+    margin: 0; font-family: Arial, sans-serif; background: #111; color: white;
+    display: flex; flex-direction: column; height: 100vh; align-items: center; justify-content: center;
+  }
+  #playerForm {
+    text-align: center;
+  }
+  #gameContainer {
+    display: none;
+    width: 100vw; height: 100vh;
+    display: flex;
+    background: #222;
+  }
+  .playerScreen {
+    flex: 1;
+    border: 2px solid #888;
+    margin: 5px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    position: relative;
+    padding-top: 40px;
+    overflow: hidden;
+    user-select: none;
+  }
+  .lives {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-size: 18px;
+    color: #0f0;
+  }
+  .playerName {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 18px;
+    color: #0ff;
+  }
+  #winnerScreen {
+    display: none;
+    text-align: center;
+  }
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    background-color: #4caf50;
+    color: white;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  .block {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    position: absolute;
+    box-shadow: 0 0 10px #000;
+    transition: transform 0.2s;
+  }
+  .block:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px #fff;
+  }
+</style>
+</head>
+<body>
+
+  <div id="playerForm">
+    <h2>Entrez les noms des joueurs</h2>
+    <input id="player1Name" placeholder="Joueur 1" />
+    <input id="player2Name" placeholder="Joueur 2" />
+    <br />
+    <button id="startGameBtn">Commencer la partie</button>
+  </div>
+
+  <div id="gameContainer">
+    <div id="player1" class="playerScreen">
+      <div class="lives" id="lives1">Vies: 10</div>
+      <div class="playerName" id="name1"></div>
+    </div>
+    <div id="player2" class="playerScreen">
+      <div class="lives" id="lives2">Vies: 10</div>
+      <div class="playerName" id="name2"></div>
+    </div>
+  </div>
+
+  <div id="winnerScreen">
+    <h1 id="winnerText"></h1>
+    <button id="restartBtn">Recommencer</button>
+    <button id="quitBtn">Quitter</button>
+  </div>
+
+<script>
+  const playerForm = document.getElementById('playerForm');
+  const startGameBtn = document.getElementById('startGameBtn');
+  const gameContainer = document.getElementById('gameContainer');
+  const winnerScreen = document.getElementById('winnerScreen');
+  const winnerText = document.getElementById('winnerText');
+  const restartBtn = document.getElementById('restartBtn');
+  const quitBtn = document.getElementById('quitBtn');
+
+  const lives1El = document.getElementById('lives1');
+  const lives2El = document.getElementById('lives2');
+  const name1El = document.getElementById('name1');
+  const name2El = document.getElementById('name2');
+
+  const player1Screen = document.getElementById('player1');
+  const player2Screen = document.getElementById('player2');
+
+  let player1 = { name: '', lives: 10 };
+  let player2 = { name: '', lives: 10 };
+
+  const blockDuration = 1000; // blocs disparaissent en 1 seconde
+  const spawnIntervalTime = 700; // un bloc toutes les 0.7 secondes
+
+  let spawnInterval1 = null;
+  let spawnInterval2 = null;
+
+  let activeBlocksTimers1 = new Map();
+  let activeBlocksTimers2 = new Map();
+
+  const colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple'];
+
+  startGameBtn.onclick = () => {
+    const p1 = document.getElementById('player1Name').value.trim();
+    const p2 = document.getElementById('player2Name').value.trim();
+
+    if (!p1 || !p2) {
+      alert("Merci d'entrer les deux noms !");
+      return;
+    }
+
+    player1.name = p1;
+    player2.name = p2;
+    player1.lives = 10;
+    player2.lives = 10;
+
+    name1El.textContent = player1.name;
+    name2El.textContent = player2.name;
+    updateLives();
+
+    playerForm.style.display = 'none';
+    winnerScreen.style.display = 'none';
+    gameContainer.style.display = 'flex';
+
+    startSpawningBlocks();
+  };
+
+  function updateLives() {
+    lives1El.textContent = `Vies: ${player1.lives}`;
+    lives2El.textContent = `Vies: ${player2.lives}`;
+  }
+
+  function getRandomPosition(container, blockSize) {
+    const rect = container.getBoundingClientRect();
+    const x = Math.floor(Math.random() * (rect.width - blockSize));
+    const y = Math.floor(Math.random() * (rect.height - blockSize - 40)) + 40;
+    return { x, y };
+  }
+
+  function createBlock(playerNum) {
+    const block = document.createElement('div');
+    block.classList.add('block');
+
+    // 20% chance d'être gris
+    const isGrey = Math.random() < 0.2;
+    if (isGrey) {
+      block.style.backgroundColor = 'grey';
+      block.dataset.isGrey = 'true';
+    } else {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      block.style.backgroundColor = color;
+      block.dataset.isGrey = 'false';
+    }
+
+    const id = Math.random().toString(36).substr(2, 9);
+    block.dataset.id = id;
+
+    const container = playerNum === 1 ? player1Screen : player2Screen;
+
+    const blockSize = 60;
+    const pos = getRandomPosition(container, blockSize);
+
+    block.style.left = pos.x + 'px';
+    block.style.top = pos.y + 'px';
+
+    container.appendChild(block);
+
+    block.onclick = () => {
+      const isGreyBlock = block.dataset.isGrey === 'true';
+      if (isGreyBlock) {
+        if (playerNum === 1) {
+          clearTimeout(activeBlocksTimers1.get(id));
+          activeBlocksTimers1.delete(id);
+          loseLife(player1);
+        } else {
+          clearTimeout(activeBlocksTimers2.get(id));
+          activeBlocksTimers2.delete(id);
+          loseLife(player2);
+        }
+      } else {
+        if (playerNum === 1) {
+          clearTimeout(activeBlocksTimers1.get(id));
+          activeBlocksTimers1.delete(id);
+        } else {
+          clearTimeout(activeBlocksTimers2.get(id));
+          activeBlocksTimers2.delete(id);
+        }
+      }
+      block.remove();
+    };
+
+    const timeoutId = setTimeout(() => {
+      block.remove();
+      if (playerNum === 1) {
+        activeBlocksTimers1.delete(id);
+        if (block.dataset.isGrey === 'false') {
+          loseLife(player1);
+        }
+      } else {
+        activeBlocksTimers2.delete(id);
+        if (block.dataset.isGrey === 'false') {
+          loseLife(player2);
+        }
+      }
+    }, blockDuration);
+
+    if (playerNum === 1) {
+      activeBlocksTimers1.set(id, timeoutId);
+    } else {
+      activeBlocksTimers2.set(id, timeoutId);
+    }
+  }
+
+  function loseLife(player) {
+    player.lives--;
+    updateLives();
+    checkGameOver();
+  }
+
+  function checkGameOver() {
+    if (player1.lives <= 0) {
+      endGame(player2.name);
+    } else if (player2.lives <= 0) {
+      endGame(player1.name);
+    }
+  }
+
+  function endGame(winnerName) {
+    clearInterval(spawnInterval1);
+    clearInterval(spawnInterval2);
+    removeAllBlocks();
+
+    gameContainer.style.display = 'none';
+    winnerScreen.style.display = 'block';
+    winnerText.textContent = `Le gagnant est ${winnerName} !`;
+  }
+
+  function removeAllBlocks() {
+    Array.from(player1Screen.querySelectorAll('.block')).forEach(b => b.remove());
+    Array.from(player2Screen.querySelectorAll('.block')).forEach(b => b.remove());
+    activeBlocksTimers1.forEach(t => clearTimeout(t));
+    activeBlocksTimers2.forEach(t => clearTimeout(t));
+    activeBlocksTimers1.clear();
+    activeBlocksTimers2.clear();
+  }
+
+  function startSpawningBlocks() {
+    spawnInterval1 = setInterval(() => createBlock(1), spawnIntervalTime);
+    spawnInterval2 = setInterval(() => createBlock(2), spawnIntervalTime);
+  }
+
+  restartBtn.onclick = () => {
+    playerForm.style.display = 'block';
+    winnerScreen.style.display = 'none';
+  };
+
+  quitBtn.onclick = () => {
+    window.location.href = 'index.html';
+  };
+</script>
+
+</body>
+</html>
