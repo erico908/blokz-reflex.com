@@ -2,14 +2,24 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<!-- Empêche le zoom (max-scale et user-scalable) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 <title>Blokz Reflex - Mode Local / Bot</title>
 <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* Empêche les gestes et pinch-zoom sur les navigateurs supportés */
+    touch-action: none;
+    -ms-touch-action: none;
+  }
   body {
-    margin: 0; font-family: Arial, sans-serif; background: #111; color: white;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: white;
     display: flex; flex-direction: column; height: 100vh; align-items: center; justify-content: center;
-    -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
-    touch-action: manipulation;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
   }
   #topBar {
     position: fixed;
@@ -26,20 +36,15 @@
     border-radius: 5px;
     cursor: pointer;
   }
-  #quitBtnTop:hover {
-    background-color: #800000;
-  }
-  #playerForm {
-    text-align: center;
-    margin-top: 40px;
-  }
+  #quitBtnTop:hover { background-color: #800000; }
+  #playerForm { text-align: center; margin-top: 40px; z-index: 50; }
   #gameContainer {
     display: none;
     width: 100vw; height: 100vh;
-    display: flex;
     background: #222;
     padding-top: 40px;
     box-sizing: border-box;
+    display: flex;
   }
   .playerScreen {
     flex: 1;
@@ -49,6 +54,8 @@
     position: relative;
     overflow: hidden;
     user-select: none;
+    touch-action: none; /* empêcher gestes dans la zone */
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
   }
   .lives {
     position: absolute;
@@ -62,45 +69,19 @@
     font-size: 18px;
     color: #0ff;
   }
-  #winnerScreen {
-    display: none;
-    text-align: center;
-  }
+  #winnerScreen { display: none; text-align: center; }
   button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-    background-color: #4caf50;
-    color: white;
-    user-select: none;
+    margin: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 6px; border: none;
+    background-color: #4caf50; color: white; user-select: none;
   }
-  button:hover {
-    background-color: #45a049;
-  }
+  button:hover { background-color: #45a049; }
   .block {
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    cursor: pointer;
-    user-select: none;
-    position: absolute;
-    box-shadow: 0 0 10px #000;
-    transition: transform 0.15s;
+    width: 60px; height: 60px; border-radius: 10px; cursor: pointer; user-select: none;
+    position: absolute; box-shadow: 0 0 10px #000; transition: transform 0.15s;
+    touch-action: none; /* empêcher les gestes sur le bloc lui-même */
   }
-  .block:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px #fff;
-  }
-  select {
-    font-size: 16px;
-    padding: 6px 10px;
-    margin-left: 10px;
-    border-radius: 5px;
-    border: none;
-  }
+  .block:hover { transform: scale(1.05); box-shadow: 0 0 15px #fff; }
+  select { font-size: 16px; padding: 6px 10px; margin-left: 10px; border-radius: 5px; border: none; }
 </style>
 </head>
 <body>
@@ -237,14 +218,15 @@
   // Get random position inside player container
   function getRandomPosition(container, blockSize = 60) {
     const rect = container.getBoundingClientRect();
-    const x = Math.random() * (rect.width - blockSize);
-    const y = Math.random() * (rect.height - blockSize - 40) + 40; // 40 pour laisser place au top bar
+    const x = Math.random() * Math.max(0, (rect.width - blockSize));
+    const y = Math.random() * Math.max(0, (rect.height - blockSize - 40)) + 40; // 40 pour laisser place au top bar
     return { x, y };
   }
 
   // Remove block if exists
   function removeBlock(playerIndex) {
     if (currentBlockElements[playerIndex]) {
+      // clear listeners (not strictly necessary here, but safe)
       currentBlockElements[playerIndex].remove();
       currentBlockElements[playerIndex] = null;
     }
@@ -281,13 +263,15 @@
     const block = document.createElement('div');
     block.classList.add('block');
 
+    // Indique explicitement à quel joueur appartient le bloc
+    block.dataset.owner = String(playerIndex);
+
     // 20% chance d'être gris (bloc qui fait -1 vie si cliqué)
     const isGray = Math.random() < 0.2;
     if (isGray) {
       block.style.backgroundColor = 'gray';
       block.dataset.isGray = 'true';
     } else {
-      // Couleur aléatoire parmi colors
       const color = colors[Math.floor(Math.random() * colors.length)];
       block.style.backgroundColor = color;
       block.dataset.isGray = 'false';
@@ -302,9 +286,15 @@
     container.appendChild(block);
     currentBlockElements[playerIndex] = block;
 
-    // Click event
-    block.onclick = () => {
+    // Click event (propre, empêche propagation et vérifie appartenance)
+    const clickHandler = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
       if (!gameActive) return;
+
+      // sécurité : vérifier que le bloc est toujours dans le bon container
+      if (block.parentElement !== container) return;
+
       const isGrayBlock = block.dataset.isGray === 'true';
 
       if (isGrayBlock) {
@@ -316,19 +306,22 @@
         }
         updateLives();
         removeBlock(playerIndex);
-        // Spawn nouveau bloc après la suppression
         if (gameActive) spawnBlock(playerIndex);
-        // Fin de partie si vies à 0
-        if (player1.lives <= 0) loseGame(0);
-        if (player2.lives <= 0) loseGame(1);
+        if (player1.lives <= 0) { loseGame(0); return; }
+        if (player2.lives <= 0) { loseGame(1); return; }
         return;
       }
 
       // Sinon bloc coloré cliqué => on continue, pas de perte
-      clearTimeout(activeTimeouts[playerIndex]);
+      if (activeTimeouts[playerIndex]) {
+        clearTimeout(activeTimeouts[playerIndex]);
+        activeTimeouts[playerIndex] = null;
+      }
       removeBlock(playerIndex);
       spawnBlock(playerIndex);
     };
+
+    block.addEventListener('click', clickHandler, { passive: false });
 
     // Timer disparition
     activeTimeouts[playerIndex] = setTimeout(() => {
@@ -363,20 +356,19 @@
   function scheduleBotAction() {
     if (!gameActive || !player2.isBot) return;
 
-    // Selon difficulté : délai et probabilité d'oublier (missChance)
     let delay, missChance;
     switch (player2.difficulty) {
       case 'easy':
         delay = 800 + Math.random() * 500; // 800 à 1300 ms
-        missChance = 0.5; // oublie souvent (débutant)
+        missChance = 0.5;
         break;
       case 'medium':
-        delay = 500 + Math.random() * 300; // 500 à 800 ms
-        missChance = 0.2; // oublie parfois (joueur régulier)
+        delay = 500 + Math.random() * 300;
+        missChance = 0.2;
         break;
       case 'hard':
-        delay = 250 + Math.random() * 250; // 250 à 500 ms
-        missChance = 0.05; // quasi jamais (pro)
+        delay = 250 + Math.random() * 250;
+        missChance = 0.05;
         break;
       default:
         delay = 900;
@@ -393,19 +385,17 @@
         return;
       }
 
-      // Si bloc coloré : décider si le bot clique ou oublie (missChance)
       if (block.dataset.isGray === 'false') {
         if (Math.random() > missChance) {
-          // bot clique
-          block.click();
+          // bot "clique" proprement : déclenche le handler sans générer propagation
+          block.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
         } else {
-          // bot oublie (ne clique pas) => laisser le timeout traiter la perte
+          // bot oublie
         }
       } else {
-        // bloc gris : bot évite (ne clique pas), laisse timeout le supprimer
+        // bloc gris : bot évite
       }
 
-      // On re-programme la prochaine action du bot
       scheduleBotAction();
     }, delay);
   }
@@ -424,15 +414,29 @@
     if (botActionTimeout) { clearTimeout(botActionTimeout); botActionTimeout = null; }
   };
 
-  // Empêche zoom sur mobile/desktop (déjà présent si tu veux)
+  // Empêche zoom sur mobile/desktop (robuste)
   window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-  window.addEventListener('touchmove', e => { if (e.scale !== 1) e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturestart', e => { e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchstart', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
   window.addEventListener('keydown', e => {
+    // Empêche Ctrl + + / - / 0 et F11
     if ((e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) || (e.key === 'F11')) {
       e.preventDefault();
     }
-  });
+  }, { passive: false });
+
+  // Optionnel : empêcher les clics en-dehors des blocs de déclencher autre chose
+  // (sécurité supplémentaire contre des handlers globaux)
+  document.addEventListener('click', e => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains('block')) {
+      // Si on clique ailleurs, on stoppe la propagation (aucune action par défaut)
+      e.stopPropagation();
+    }
+  }, { passive: false });
 
 </script>
 </body>
 </html>
+
