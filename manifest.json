@@ -1,9 +1,12 @@
 {
   "name": "Blokz Reflex",
   "short_name": "Blokz",
-  "start_url": "/blokz-reflex/",
+  "description": "Jeu de réflexes multijoueur avec boutique et trophées — jouable en local et hors-connexion.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "background_color": "#111111",
   "theme_color": "#00ffc8",
   "icons": [
     {
