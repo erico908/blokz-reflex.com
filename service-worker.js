@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = 'blokz-reflex-v1'; // incrémente quand tu déploies des changements
+const CACHE_NAME = 'blokz-reflex-v1'; // change ce nom quand tu mets à jour les assets
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -9,7 +9,7 @@ const PRECACHE_URLS = [
   './icon-512.png'
 ];
 
-// INSTALL : pré-cache les ressources essentielles
+// INSTALL : pré-cache les ressources
 self.addEventListener('install', event => {
   console.log('[SW] install');
   self.skipWaiting();
@@ -20,14 +20,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// ACTIVATE : nettoie les anciens caches
+// ACTIVATE : nettoyage des caches obsolètes
 self.addEventListener('activate', event => {
   console.log('[SW] activate');
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(key => {
         if (key !== CACHE_NAME) {
-          console.log('[SW] deleting cache', key);
+          console.log('[SW] delete cache', key);
           return caches.delete(key);
         }
       }))
@@ -36,35 +36,33 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// FETCH : stratégie "cache-first, fallback réseau" + navigation fallback -> index.html
+// FETCH : cache-first, fallback réseau, navigation fallback -> index.html
 self.addEventListener('fetch', event => {
-  // Ne gère que les GET
+  // On gère uniquement les GET pour éviter les problèmes avec POST etc.
   if (event.request.method !== 'GET') return;
 
   const requestUrl = new URL(event.request.url);
 
-  // Ne pas interférer avec les requêtes cross-origin (CDN/API externes)
-  if (requestUrl.origin !== location.origin) {
-    return; // laisse le navigateur gérer
-  }
+  // Si requête cross-origin, laisse le réseau la gérer (ne pas mettre en cache automatiquement)
+  if (requestUrl.origin !== location.origin) return;
 
-  // Pour les navigations (mode SPA / navigation directe), tenter le réseau puis fallback cache index.html
+  // Si navigation (entrée d'URL / rechargement), essaie le réseau, sinon renvoie index.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // met à jour le cache de la page de navigation
+      fetch(event.request).then(response => {
+        // Met à jour le cache de la page si OK
+        if (response && response.ok) {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-          return response;
-        })
-        .catch(() => caches.match('./index.html'))
+        }
+        return response;
+      }).catch(() => caches.match('./index.html'))
     );
     return;
   }
 
-  // Pour les assets : renvoyer depuis cache si présent, sinon chercher réseau et mettre à jour le cache
+  // Pour les assets : renvoie le cache si présent, sinon fetch -> et met en cache la réponse
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
+    caches.match(event.request).then(cached => {
       const networkFetch = fetch(event.request)
         .then(networkResponse => {
           if (networkResponse && networkResponse.ok) {
@@ -73,20 +71,20 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         })
         .catch(() => {
-          // si réseau KO et pas de cache, la promise renverra undefined — navigateur gèrera l'erreur
+          // réseau KO : si pas de cache, ça retournera undefined (browser gèrera)
         });
-      // retourne cache si existe, sinon attend le réseau
-      return cachedResponse || networkFetch;
+      // retourne cache si existant, sinon la réponse réseau
+      return cached || networkFetch;
     })
   );
 });
 
-// Message handler : pour forcer activation depuis la page (registration.waiting.postMessage({type:'SKIP_WAITING'}))
+// Message handler : permet de forcer activation depuis la page
 self.addEventListener('message', event => {
-  if (!event.data) return;
-  if (event.data.type === 'SKIP_WAITING') {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
+
 
 
