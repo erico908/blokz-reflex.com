@@ -1,7 +1,7 @@
 {
   "name": "Blokz Reflex",
   "short_name": "Blokz",
-  "description": "Jeu de réflexes multijoueur avec boutique et trophées — jouable en local et hors-connexion.",
+  "description": "Jeu de réflexes multijoueur avec boutique et trophées — jouable hors-ligne.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -21,5 +21,6 @@
     }
   ]
 }
+
 
 
