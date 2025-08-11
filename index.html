@@ -407,11 +407,11 @@
 </html
   <!-- Script d'enregistrement du service worker pour PWA -->
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log("Service Worker enregistré"))
-      .catch(e => console.error("Erreur Service Worker", e));
-  }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('SW enregistré', reg))
+    .catch(err => console.error('Erreur SW', err));
+}
 </script>
 </body>
       </html>
